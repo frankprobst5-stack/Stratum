@@ -1,0 +1,10 @@
+{
+  "id": "users",
+  "name": "Users & Authentication",
+  "version": "1.0.0",
+  "core": true,
+  "requires": [],
+  "provides_capabilities": ["users.manage"],
+  "nav": [],
+  "blocks": ["users.newest_members"]
+}

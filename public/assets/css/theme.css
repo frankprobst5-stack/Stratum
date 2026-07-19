@@ -1,0 +1,337 @@
+/*
+ * Stratum public theme — structural CSS, extracted from an inline
+ * <style> block in layout.php (2026-07-19) so the browser can actually
+ * cache it across page navigations instead of re-downloading/re-parsing
+ * it on every single request. See docs/design-system.md for the full
+ * spec this file implements.
+ *
+ * Only genuinely per-install/per-request dynamic values (--strat-accent,
+ * --strat-font, and which dark-mode CSS path is active) live inline in
+ * layout.php's own tiny <style> block — everything else, including both
+ * the light and dark color palettes, is a fixed design constant and
+ * belongs here as real static CSS.
+ *
+ * Versioned via a query string (?v=N in layout.php's <link>), not a
+ * build-step content hash — matches this app's "no npm, no bundler"
+ * posture. Bump N by hand whenever this file changes.
+ */
+
+* { box-sizing: border-box; }
+
+/*
+ * Safe, low-risk reset additions only — image overflow and default table
+ * spacing, neither of which any existing template relies on for its
+ * current appearance. Deliberately NOT adopting a full modern reset here
+ * (zeroed margins on every element, list bullets stripped globally,
+ * etc., ported in from a scaffold the user shared, 2026-07-19) — most of
+ * the ~40 module templates still lean on default browser paragraph/list/
+ * table spacing since the content-page pass (docs/design-system.md's
+ * .strat-pill/.strat-inline-box work) hasn't happened yet. Landing an
+ * aggressive global reset before that pass would strip real spacing from
+ * pages nobody's touched yet with nothing there to replace it — exactly
+ * backwards from this whole effort's goal. Revisit alongside that pass.
+ */
+img, picture, svg, video, canvas { display: block; max-width: 100%; }
+table { border-collapse: collapse; border-spacing: 0; }
+
+:root {
+    --strat-bg: #f4f5f7;
+    --strat-text: #1a1a1a;
+    --strat-card-bg: #fff;
+    --strat-card-border: #d1d5db;
+    --strat-columns-bg: #aab4c4;
+    --strat-dropdown-bg: #fff;
+    --strat-dropdown-hover-bg: #f4f5f7;
+    --strat-muted-text: #666;
+    --strat-color-blue: var(--strat-accent, #2f6fed);
+    --strat-color-green: #22c55e;
+    --strat-color-orange: #f59e0b;
+    --strat-color-purple: #a855f7;
+    --strat-color-gold: #eab308;
+    --strat-color-teal: #14b8a6;
+    --strat-color-red: #ef4444;
+    --strat-color-cyan: #06b6d4;
+
+    /* Radius/shadow/transition/z-index/spacing tokens — ported in from a
+       CSS scaffold the user shared (2026-07-19), renamed to the --strat-
+       convention already wired into every other variable in this file. */
+    --strat-radius-sm: 6px;
+    --strat-radius: 10px;
+    --strat-radius-lg: 16px;
+    --strat-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07);
+    --strat-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    --strat-transition-fast: 0.15s ease;
+    --strat-transition: 0.25s ease;
+    --strat-z-dropdown: 100;
+    --strat-z-sticky: 500;
+    --strat-z-modal: 900;
+    --strat-z-toast: 1000;
+    --strat-space-1: 0.25rem;
+    --strat-space-2: 0.5rem;
+    --strat-space-3: 0.75rem;
+    --strat-space-4: 1rem;
+    --strat-space-5: 1.5rem;
+    --strat-space-6: 2rem;
+}
+
+/*
+ * A visitor's explicit choice (data-theme, stamped by the dark-mode
+ * toggle's inline script) always wins outright; "on" mode (forced dark
+ * site-wide) also just sets data-theme="dark" server-side in layout.php
+ * — same selector serves both cases, no duplicated ruleset.
+ */
+:root[data-theme="dark"] {
+    --strat-bg: #15171c;
+    --strat-text: #e4e6eb;
+    --strat-card-bg: #1e2128;
+    --strat-card-border: #333a4a;
+    --strat-columns-bg: #0a0b0e;
+    --strat-dropdown-bg: #1e2128;
+    --strat-dropdown-hover-bg: #2a2e38;
+    --strat-muted-text: #9aa0ab;
+}
+
+/*
+ * "auto" mode's OS-preference fallback — gated by the data-dark-mode
+ * marker (also set server-side) so "off" mode is never accidentally
+ * pulled into dark just because a visitor's OS prefers it. In practice
+ * this only matters for the brief window before the FOUC-prevention
+ * script runs, or with JS disabled — the script always sets an explicit
+ * data-theme afterward, which the :root[data-theme="dark"] rule above
+ * (higher specificity via the attribute selector) then takes over from.
+ */
+@media (prefers-color-scheme: dark) {
+    html[data-dark-mode="auto"]:not([data-theme="light"]) {
+        --strat-bg: #15171c;
+        --strat-text: #e4e6eb;
+        --strat-card-bg: #1e2128;
+        --strat-card-border: #333a4a;
+        --strat-columns-bg: #0a0b0e;
+        --strat-dropdown-bg: #1e2128;
+        --strat-dropdown-hover-bg: #2a2e38;
+        --strat-muted-text: #9aa0ab;
+    }
+}
+
+/* Typography scale — docs/design-system.md */
+h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 1rem; }
+h2 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.75rem; }
+h3 { font-size: 1.05rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+p { line-height: 1.5; }
+small, .strat-muted { font-size: 0.85rem; color: var(--strat-muted-text); }
+
+body {
+    font-family: var(--strat-font, system-ui, sans-serif);
+    line-height: 1.5;
+    margin: 0;
+    background: var(--strat-bg);
+    color: var(--strat-text);
+}
+
+.site-banner {
+    background: radial-gradient(ellipse at center, #1a3a6e 0%, #0a0d16 65%, #0a0d16 100%);
+}
+/*
+ * Full width, height: auto — the banner art spans edge to edge with NO
+ * cropping: a fixed-height + object-fit: cover attempt cut off real
+ * content (confirmed cropped in a real Firefox tab, 2026-07-18), so
+ * height follows the image's own natural aspect ratio instead of
+ * forcing a shrunk masthead height a wide banner can't fit into.
+ */
+.site-banner-img { width: 100%; height: auto; display: block; }
+.site-topbar { background: #0d0f18; color: #fff; }
+.site-topbar-inner { padding: 0.6rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
+.topbar-brand { display: flex; align-items: center; gap: 0.5rem; color: #fff; text-decoration: none; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
+.topbar-brand img { height: 1.6rem; width: auto; }
+.topbar-nav { flex: 1; min-width: 0; overflow: hidden; }
+.topbar-nav ul { list-style: none; display: flex; gap: 0.1rem; margin: 0; padding: 0; align-items: center; flex-wrap: nowrap; }
+.topbar-nav a, .topbar-nav button {
+    color: #b8bdcc; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;
+    padding: 0.4rem 0.45rem; border-radius: 4px; font-size: 0.8rem; background: none; border: none;
+    border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+.topbar-nav a:hover, .topbar-nav button:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.topbar-nav a.active { color: var(--strat-accent); border-bottom-color: var(--strat-accent); }
+.topbar-actions { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
+.strat-header-icon {
+    position: relative; color: #b8bdcc; text-decoration: none; padding: 0.45rem; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; background: none; border: none;
+    cursor: pointer; font-size: 1.05rem; line-height: 1;
+}
+.strat-header-icon:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.strat-header-icon-badge {
+    position: absolute; top: -2px; right: -2px; background: #c8362b; color: #fff; border-radius: 9px;
+    padding: 0 0.35rem; font-size: 0.62rem; font-weight: 700; line-height: 1.3;
+}
+.strat-header-dropdown { position: relative; display: inline-block; }
+.strat-header-dropdown-panel {
+    display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; background: var(--strat-dropdown-bg);
+    color: var(--strat-text); border-radius: var(--strat-radius-sm); box-shadow: var(--strat-shadow); padding: 0.4rem;
+    z-index: var(--strat-z-dropdown); min-width: 11rem;
+}
+.strat-header-dropdown-panel.open { display: block; }
+.strat-header-dropdown-panel a, .strat-header-dropdown-panel form button {
+    display: block; width: 100%; text-align: left; padding: 0.4rem 0.6rem; color: var(--strat-text);
+    text-decoration: none; border: none; background: none; font-size: 0.85rem; cursor: pointer;
+    font-family: inherit; border-radius: var(--strat-radius-sm); box-sizing: border-box;
+    transition: background var(--strat-transition-fast);
+}
+.strat-header-dropdown-panel a:hover, .strat-header-dropdown-panel form button:hover { background: var(--strat-dropdown-hover-bg); }
+.topbar-profile-avatar {
+    width: 2rem; height: 2rem; border-radius: 50%; background: var(--strat-accent); color: #fff; display: flex;
+    align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; flex-shrink: 0;
+}
+/*
+ * width: 95% + margin: 0 auto instead of a fixed max-width — scales
+ * proportionally at every viewport size. min-width: 0 on every grid
+ * item below is the fix for CSS Grid's default min-width: auto, which
+ * refuses to shrink a track below its content's natural width.
+ */
+.layout { display: grid; grid-template-columns: 200px 1fr 200px; gap: 1.5rem; width: 95%; margin: 0 auto; padding: 1.5rem 0; }
+.layout main { background: var(--strat-card-bg); border-radius: 8px; padding: 1.5rem; min-height: 200px; min-width: 0; }
+.layout aside { min-height: 100px; min-width: 0; }
+footer { text-align: center; padding: 1.5rem; color: var(--strat-muted-text); font-size: 0.85rem; }
+.bbcode-toolbar { margin-bottom: 0.4rem; }
+.bbcode-toolbar button { margin-right: 0.35rem; padding: 0.2rem 0.6rem; cursor: pointer; }
+.strat-front-hero { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.strat-front-hero-main, .strat-front-hero-side { min-width: 0; }
+/*
+ * Backdrop specifically for the front-page column area (not <main>
+ * globally) so the cards below actually pop against something, instead
+ * of a near-background-colored card being technically present but
+ * practically invisible (the "still no cards" lesson, 2026-07-18).
+ */
+.strat-front-columns {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+    background: var(--strat-columns-bg); border-radius: 8px; padding: 1.5rem;
+}
+.strat-front-col { min-height: 4rem; min-width: 0; }
+/*
+ * Separates stacked blocks within one column so they read as distinct
+ * panels instead of running together. Applied by BlockRegistry::
+ * renderRegion()'s $wrapInCards flag, not hand-written per block.
+ */
+.strat-block-card {
+    background: var(--strat-card-bg); border: 1px solid var(--strat-card-border); border-radius: var(--strat-radius);
+    padding: 1rem; margin-bottom: 1rem; box-shadow: var(--strat-shadow-sm);
+    transition: background var(--strat-transition-fast);
+}
+.strat-block-card:last-child { margin-bottom: 0; }
+
+/*
+ * Card header (icon badge + title) — rendered by BlockRegistry itself
+ * for any block implementing CardBlock, never hand-written per block.
+ * See docs/design-system.md.
+ */
+.strat-card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
+.strat-card-header h3 { margin: 0; }
+.strat-icon-badge {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 2rem; height: 2rem; border-radius: var(--strat-radius-sm); font-size: 1.05rem; line-height: 1;
+}
+.strat-icon-badge[data-accent="blue"] { background: color-mix(in srgb, var(--strat-color-blue) 18%, transparent); }
+.strat-icon-badge[data-accent="green"] { background: color-mix(in srgb, var(--strat-color-green) 18%, transparent); }
+.strat-icon-badge[data-accent="orange"] { background: color-mix(in srgb, var(--strat-color-orange) 18%, transparent); }
+.strat-icon-badge[data-accent="purple"] { background: color-mix(in srgb, var(--strat-color-purple) 18%, transparent); }
+.strat-icon-badge[data-accent="gold"] { background: color-mix(in srgb, var(--strat-color-gold) 18%, transparent); }
+.strat-icon-badge[data-accent="teal"] { background: color-mix(in srgb, var(--strat-color-teal) 18%, transparent); }
+.strat-icon-badge[data-accent="red"] { background: color-mix(in srgb, var(--strat-color-red) 18%, transparent); }
+.strat-icon-badge[data-accent="cyan"] { background: color-mix(in srgb, var(--strat-color-cyan) 18%, transparent); }
+
+/* Card footer CTA ("View All" etc.) — rendered by BlockRegistry when a CardBlock declares a viewAllUrl(). */
+.strat-card-cta {
+    display: block; text-align: center; margin-top: 0.75rem; padding: 0.45rem;
+    border: 1px solid var(--strat-card-border); border-radius: var(--strat-radius-sm); text-decoration: none;
+    color: var(--strat-text); font-size: 0.85rem; font-weight: 600;
+    transition: background var(--strat-transition-fast);
+}
+.strat-card-cta:hover { background: var(--strat-dropdown-hover-bg); }
+
+/* Quick Links tile grid — used by the public QuickLinksBlock. */
+.strat-quick-link-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+.strat-quick-link-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.9rem 0.5rem;
+    border-radius: var(--strat-radius-sm); text-decoration: none; font-size: 0.85rem; font-weight: 600; text-align: center;
+    color: var(--strat-text); border: 1px solid var(--strat-card-border);
+    transition: background var(--strat-transition-fast);
+}
+.strat-quick-link-tile:hover { background: var(--strat-dropdown-hover-bg); }
+.strat-quick-link-tile .strat-icon-badge { width: 2.25rem; height: 2.25rem; font-size: 1.2rem; }
+
+/* Stat row (3 big numbers) — formalizes site_stats.summary's existing layout. */
+.strat-stat-row { display: flex; justify-content: space-around; text-align: center; }
+.strat-stat-row .strat-stat-value { font-size: 1.3rem; font-weight: 700; display: block; }
+.strat-stat-row .strat-stat-label { font-size: 0.8rem; color: var(--strat-muted-text); }
+
+/*
+ * Content-page pass, 2026-07-19 — forum/downloads first (the two the
+ * user flagged directly), same component vocabulary meant to extend to
+ * wiki/calendar/tags/gallery/chat next. See docs/design-system.md.
+ */
+
+/* Pill — status labels (pinned/locked, scan-status), tags, rating counts. Replaces the tag-pill snippet copy-pasted inline across 4+ files. */
+.strat-pill {
+    display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600; line-height: 1.5; text-decoration: none;
+}
+.strat-pill[data-tone="neutral"] { background: var(--strat-dropdown-hover-bg); color: var(--strat-muted-text); }
+.strat-pill[data-tone="accent"] { background: color-mix(in srgb, var(--strat-accent) 15%, transparent); color: var(--strat-accent); }
+.strat-pill[data-tone="success"] { background: color-mix(in srgb, var(--strat-color-green) 15%, transparent); color: var(--strat-color-green); }
+.strat-pill[data-tone="danger"] { background: color-mix(in srgb, var(--strat-color-red) 15%, transparent); color: var(--strat-color-red); }
+.strat-pill[data-tone="warning"] { background: color-mix(in srgb, var(--strat-color-orange) 15%, transparent); color: var(--strat-color-orange); }
+
+/* Avatar circle — initials, same idea as .topbar-profile-avatar but a real reusable class instead of a one-off. */
+.strat-avatar {
+    width: 2.25rem; height: 2.25rem; border-radius: 50%; background: var(--strat-accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+}
+
+/* List row — board list, topic list, file list. Replaces bare <table>s. */
+.strat-list { display: flex; flex-direction: column; gap: 0.5rem; margin: 0 0 1.5rem; }
+.strat-list-row {
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+    background: var(--strat-card-bg); border: 1px solid var(--strat-card-border); border-radius: var(--strat-radius-sm);
+}
+.strat-list-row.is-sub { margin-left: 1.75rem; }
+.strat-list-row-icon { font-size: 1.3rem; flex-shrink: 0; width: 1.75rem; text-align: center; }
+.strat-list-row-main { flex: 1; min-width: 0; }
+.strat-list-row-title { font-weight: 600; }
+.strat-list-row-title a { color: var(--strat-text); text-decoration: none; }
+.strat-list-row-title a:hover { text-decoration: underline; }
+.strat-list-row-meta { font-size: 0.8rem; color: var(--strat-muted-text); margin-top: 0.15rem; }
+.strat-list-row-stats { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--strat-muted-text); text-align: center; flex-shrink: 0; }
+.strat-list-row-stats strong { display: block; color: var(--strat-text); font-size: 0.95rem; }
+.strat-list-row-lastpost { font-size: 0.8rem; color: var(--strat-muted-text); text-align: right; flex-shrink: 0; min-width: 9rem; }
+
+/* Post/reply component — forum today, the same generic shape article/wiki comments can adopt later. */
+.strat-post { display: flex; gap: 0.85rem; padding: 1rem; background: var(--strat-card-bg); border: 1px solid var(--strat-card-border); border-radius: var(--strat-radius-sm); margin-bottom: 0.75rem; }
+.strat-post-author { flex-shrink: 0; text-align: center; width: 4.5rem; }
+.strat-post-author .strat-avatar { width: 2.75rem; height: 2.75rem; margin: 0 auto 0.3rem; font-size: 0.9rem; }
+.strat-post-author-name { font-size: 0.8rem; font-weight: 600; word-break: break-word; }
+.strat-post-body { flex: 1; min-width: 0; }
+.strat-post-meta { font-size: 0.78rem; color: var(--strat-muted-text); margin-bottom: 0.5rem; }
+.strat-post-content { white-space: pre-wrap; }
+.strat-post-signature { margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--strat-card-border); color: var(--strat-muted-text); font-size: 0.85rem; white-space: pre-wrap; }
+.strat-post-footer { margin-top: 0.6rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
+
+/* Poll widget — progress bars use --strat-accent instead of the hardcoded #2f6fed the old inline version had. */
+.strat-poll { margin-bottom: 1.25rem; padding: 1rem; background: var(--strat-card-bg); border: 1px solid var(--strat-card-border); border-radius: var(--strat-radius-sm); }
+.strat-poll-option-row { margin: 0.4rem 0; }
+.strat-poll-option-header { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.2rem; }
+.strat-poll-bar-track { background: var(--strat-dropdown-hover-bg); border-radius: 3px; height: 8px; overflow: hidden; }
+.strat-poll-bar-fill { background: var(--strat-accent); height: 8px; }
+
+@media (max-width: 620px) {
+    /* Labels stay visible — an icon alone doesn't self-explain what it links to. */
+    .site-topbar-inner { flex-wrap: wrap; gap: 0.4rem; }
+    .topbar-nav { order: 3; flex-basis: 100%; }
+    .strat-list-row { flex-wrap: wrap; }
+    .strat-list-row-lastpost { text-align: left; min-width: 0; width: 100%; }
+    .strat-post { flex-direction: column; }
+    .strat-post-author { width: auto; display: flex; align-items: center; gap: 0.5rem; text-align: left; }
+    .strat-post-author .strat-avatar { margin: 0; }
+}
+@media (max-width: 800px) {
+    .strat-front-hero, .strat-front-columns { grid-template-columns: 1fr; }
+    .strat-quick-link-grid { grid-template-columns: repeat(2, 1fr); }
+}

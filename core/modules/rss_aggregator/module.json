@@ -1,0 +1,17 @@
+{
+  "id": "rss_aggregator",
+  "name": "RSS Aggregator",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["articles"],
+  "provides_capabilities": [
+    "rss.manage"
+  ],
+  "nav": [
+    { "label": "Feeds", "route": "/feeds" }
+  ],
+  "admin_nav": [
+    { "label": "RSS Feeds", "route": "/admin/rss", "capability": "rss.manage" }
+  ],
+  "blocks": []
+}

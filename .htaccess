@@ -1,0 +1,19 @@
+# Stratum CMS — project root.
+#
+# The correct deployment is pointing your host's document root at the
+# public/ folder, not this one. If your host doesn't let you do that
+# (common on budget shared hosting) and this project's root ends up served
+# directly, .env — which holds your database password — must never be
+# reachable over HTTP. This is the one thing that absolutely cannot be
+# left to chance regardless of hosting setup.
+<IfModule mod_authz_core.c>
+    <Files ".env">
+        Require all denied
+    </Files>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <Files ".env">
+        Order allow,deny
+        Deny from all
+    </Files>
+</IfModule>

@@ -1,0 +1,13 @@
+{
+  "id": "activity",
+  "name": "Activity Feed",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [],
+  "nav": [
+    { "label": "Activity", "route": "/activity" }
+  ],
+  "admin_nav": [],
+  "blocks": ["activity.feed"]
+}

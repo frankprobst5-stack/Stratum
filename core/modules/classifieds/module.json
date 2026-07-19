@@ -1,0 +1,18 @@
+{
+  "id": "classifieds",
+  "name": "Classifieds",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "classifieds.post",
+    "classifieds.manage"
+  ],
+  "nav": [
+    { "label": "Classifieds", "route": "/classifieds" }
+  ],
+  "admin_nav": [
+    { "label": "Classifieds", "route": "/admin/classifieds", "capability": "classifieds.manage" }
+  ],
+  "blocks": []
+}

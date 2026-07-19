@@ -1,0 +1,12 @@
+{
+  "id": "hello",
+  "name": "Hello (demo module)",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [],
+  "nav": [
+    { "label": "Hello", "route": "/hello" }
+  ],
+  "blocks": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": "org_spaces",
+  "name": "Organization Spaces",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "org_spaces.manage",
+    "org_spaces.moderate"
+  ],
+  "nav": [
+    { "label": "Organizations", "route": "/organizations" }
+  ],
+  "admin_nav": [
+    { "label": "Organizations", "route": "/admin/org_spaces", "capability": "org_spaces.manage" }
+  ],
+  "blocks": ["org_spaces.featured_club"]
+}

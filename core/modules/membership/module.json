@@ -1,0 +1,18 @@
+{
+  "id": "membership",
+  "name": "Membership",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [
+    "membership.manage"
+  ],
+  "nav": [],
+  "guest_nav": [
+    { "label": "Sign up", "route": "/register" }
+  ],
+  "admin_nav": [
+    { "label": "Membership", "route": "/admin/membership", "capability": "membership.manage" }
+  ],
+  "blocks": []
+}

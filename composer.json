@@ -1,0 +1,18 @@
+{
+    "name": "stratum/cms",
+    "description": "Stratum CMS — a modular, community-first portal platform for clubs and associations.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Stratum\\Core\\": "core/services/",
+            "Stratum\\Admin\\": "core/admin/controllers/"
+        },
+        "files": [
+            "core/services/helpers.php"
+        ]
+    }
+}

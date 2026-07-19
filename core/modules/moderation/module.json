@@ -1,0 +1,16 @@
+{
+  "id": "moderation",
+  "name": "Moderation Queue",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "moderation.report",
+    "moderation.manage"
+  ],
+  "nav": [],
+  "admin_nav": [
+    { "label": "Moderation", "route": "/admin/moderation", "capability": "moderation.manage" }
+  ],
+  "blocks": []
+}

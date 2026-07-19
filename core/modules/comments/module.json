@@ -1,0 +1,11 @@
+{
+  "id": "comments",
+  "name": "Comments",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": ["comments.create"],
+  "nav": [],
+  "admin_nav": [],
+  "blocks": ["comments.recent"]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "calendar",
+  "name": "Calendar",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["comments"],
+  "provides_capabilities": [
+    "calendar.create_event",
+    "calendar.rsvp",
+    "calendar.manage"
+  ],
+  "nav": [
+    { "label": "Calendar", "route": "/calendar" }
+  ],
+  "admin_nav": [
+    { "label": "Calendar", "route": "/admin/calendar", "capability": "calendar.manage" }
+  ],
+  "blocks": ["calendar.upcoming_events"]
+}

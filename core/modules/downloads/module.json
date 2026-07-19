@@ -1,0 +1,18 @@
+{
+  "id": "downloads",
+  "name": "Downloads",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "downloads.upload",
+    "downloads.manage"
+  ],
+  "nav": [
+    { "label": "Downloads", "route": "/downloads" }
+  ],
+  "admin_nav": [
+    { "label": "Downloads", "route": "/admin/downloads", "capability": "downloads.manage" }
+  ],
+  "blocks": ["downloads.recent"]
+}

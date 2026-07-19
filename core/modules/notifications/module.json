@@ -1,0 +1,11 @@
+{
+  "id": "notifications",
+  "name": "Notifications",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [],
+  "nav": [],
+  "admin_nav": [],
+  "blocks": ["notifications.bell"]
+}

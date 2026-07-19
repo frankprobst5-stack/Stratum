@@ -1,0 +1,18 @@
+{
+  "id": "video",
+  "name": "Video",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["comments"],
+  "provides_capabilities": [
+    "video.upload",
+    "video.manage"
+  ],
+  "nav": [
+    { "label": "Videos", "route": "/videos" }
+  ],
+  "admin_nav": [
+    { "label": "Videos", "route": "/admin/video", "capability": "video.manage" }
+  ],
+  "blocks": ["video.recent"]
+}

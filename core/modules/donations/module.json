@@ -1,0 +1,18 @@
+{
+  "id": "donations",
+  "name": "Donations",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "donations.contribute",
+    "donations.manage"
+  ],
+  "nav": [
+    { "label": "Donations", "route": "/donations" }
+  ],
+  "admin_nav": [
+    { "label": "Donations", "route": "/admin/donations", "capability": "donations.manage" }
+  ],
+  "blocks": []
+}

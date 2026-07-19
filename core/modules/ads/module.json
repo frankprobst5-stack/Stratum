@@ -1,0 +1,15 @@
+{
+  "id": "ads",
+  "name": "Advertising",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "ads.manage"
+  ],
+  "nav": [],
+  "admin_nav": [
+    { "label": "Advertising", "route": "/admin/ads", "capability": "ads.manage" }
+  ],
+  "blocks": ["ads.banner"]
+}

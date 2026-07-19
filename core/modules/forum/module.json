@@ -1,0 +1,20 @@
+{
+  "id": "forum",
+  "name": "Forum",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [
+    "forum.create_topic",
+    "forum.reply",
+    "forum.moderate",
+    "forum.manage"
+  ],
+  "nav": [
+    { "label": "Forum", "route": "/forum" }
+  ],
+  "admin_nav": [
+    { "label": "Forum", "route": "/admin/forum", "capability": "forum.manage" }
+  ],
+  "blocks": ["forum.recent_topics"]
+}

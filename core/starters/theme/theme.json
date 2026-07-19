@@ -1,0 +1,7 @@
+{
+  "id": "my_theme",
+  "name": "My Theme",
+  "version": "1.0.0",
+  "parent": null,
+  "description": "Starter theme skeleton — rename \"id\" here before uploading to a real site, then customize templates/layout.php and add overrides/{module}/{template}.php files to change individual pages."
+}

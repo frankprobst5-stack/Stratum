@@ -1,0 +1,14 @@
+# Stratum CMS — Apache front-controller rewrite.
+#
+# Without this, every pretty URL the router handles (e.g. /forum/topics/5)
+# 404s on real Apache hosting — the PHP built-in dev server (`php -S`)
+# auto-routes everything to index.php as a convenience that's easy to
+# forget isn't actually there in production. This file makes real files
+# (assets/, favicon.png, install.php) serve directly, and routes
+# everything else through index.php exactly like local dev already does.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>

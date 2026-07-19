@@ -1,0 +1,16 @@
+{
+  "id": "gallery",
+  "name": "Gallery",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["comments"],
+  "provides_capabilities": [
+    "gallery.upload",
+    "gallery.manage"
+  ],
+  "nav": [
+    { "label": "Gallery", "route": "/gallery" }
+  ],
+  "admin_nav": [],
+  "blocks": ["gallery.highlights"]
+}

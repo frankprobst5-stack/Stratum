@@ -1,0 +1,11 @@
+{
+  "id": "custom_blocks",
+  "name": "Custom Blocks",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [],
+  "nav": [],
+  "admin_nav": [],
+  "blocks": ["custom.html", "custom.text", "custom.welcome_cta", "custom.quick_links"]
+}

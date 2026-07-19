@@ -1,0 +1,13 @@
+{
+  "id": "search",
+  "name": "Search",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [],
+  "nav": [
+    { "label": "Search", "route": "/search" }
+  ],
+  "admin_nav": [],
+  "blocks": ["search.searchbox"]
+}

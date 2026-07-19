@@ -1,0 +1,13 @@
+{
+  "id": "bookmarks",
+  "name": "Bookmarks",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [],
+  "nav": [
+    { "label": "Bookmarks", "route": "/bookmarks" }
+  ],
+  "admin_nav": [],
+  "blocks": []
+}

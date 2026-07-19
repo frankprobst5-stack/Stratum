@@ -1,0 +1,13 @@
+{
+  "id": "tags",
+  "name": "Tags",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [],
+  "nav": [
+    { "label": "Tags", "route": "/tags" }
+  ],
+  "admin_nav": [],
+  "blocks": ["tags.cloud"]
+}

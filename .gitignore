@@ -1,0 +1,39 @@
+/vendor/
+/.env
+
+# Local dev tooling config — .claude/settings.local.json was found to
+# contain a real MySQL password embedded in a permission-allowlist entry
+# (2026-07-19, caught before the first commit). The whole directory is
+# local/personal tooling, not application source, so it's excluded
+# entirely rather than trying to scrub individual secrets out of it.
+/.claude/
+
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+
+/storage/cache/*
+!/storage/cache/.gitkeep
+!/storage/cache/pages/
+/storage/cache/pages/*
+!/storage/cache/pages/.gitkeep
+
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+/storage/backups/*
+!/storage/backups/.gitkeep
+
+# Working reference/scratch assets — design mockups, source art dropped in
+# ad hoc during development, not part of the shipped application. Stay on
+# disk locally, never tracked.
+/look.png
+/newbanner.png
+/newbanner_cropped.png
+/ChatGPT Image*.png
+/*.avif
+/these are features clubs.txt
+
+# Partial CSS scaffold, absorbed into public/assets/css/theme.css (see
+# docs/design-system.md) — left on disk at the user's own request but not
+# part of the shipped repo (broken internal imports, mostly empty stub files).
+/themes css start/

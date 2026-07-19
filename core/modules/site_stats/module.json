@@ -1,0 +1,11 @@
+{
+  "id": "site_stats",
+  "name": "Site Statistics",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users", "comments"],
+  "provides_capabilities": [],
+  "nav": [],
+  "admin_nav": [],
+  "blocks": ["site_stats.summary"]
+}

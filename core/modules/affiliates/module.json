@@ -1,0 +1,17 @@
+{
+  "id": "affiliates",
+  "name": "Affiliate Links",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "affiliates.manage"
+  ],
+  "nav": [
+    { "label": "Our Partners", "route": "/affiliates" }
+  ],
+  "admin_nav": [
+    { "label": "Affiliate Links", "route": "/admin/affiliates", "capability": "affiliates.manage" }
+  ],
+  "blocks": []
+}

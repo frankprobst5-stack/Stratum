@@ -1,0 +1,13 @@
+{
+  "id": "pages",
+  "name": "Pages",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": ["pages.manage"],
+  "nav": [],
+  "admin_nav": [
+    { "label": "Pages", "route": "/admin/pages", "capability": "pages.manage" }
+  ],
+  "blocks": []
+}

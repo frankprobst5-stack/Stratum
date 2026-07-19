@@ -1,0 +1,18 @@
+{
+  "id": "dues",
+  "name": "Dues",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "dues.pay",
+    "dues.manage"
+  ],
+  "nav": [
+    { "label": "Dues", "route": "/dues" }
+  ],
+  "admin_nav": [
+    { "label": "Dues", "route": "/admin/dues", "capability": "dues.manage" }
+  ],
+  "blocks": []
+}

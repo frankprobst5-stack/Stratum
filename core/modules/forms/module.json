@@ -1,0 +1,17 @@
+{
+  "id": "forms",
+  "name": "Surveys & Forms",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "forms.manage"
+  ],
+  "nav": [
+    { "label": "Forms", "route": "/forms" }
+  ],
+  "admin_nav": [
+    { "label": "Surveys & Forms", "route": "/admin/forms", "capability": "forms.manage" }
+  ],
+  "blocks": []
+}

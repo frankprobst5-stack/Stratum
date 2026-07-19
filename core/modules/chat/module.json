@@ -1,0 +1,17 @@
+{
+  "id": "chat",
+  "name": "Chat",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [
+    "chat.manage"
+  ],
+  "nav": [
+    { "label": "Chat", "route": "/chat" }
+  ],
+  "admin_nav": [
+    { "label": "Chat", "route": "/admin/chat", "capability": "chat.manage" }
+  ],
+  "blocks": ["chat.available_rooms"]
+}

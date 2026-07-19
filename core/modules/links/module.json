@@ -1,0 +1,18 @@
+{
+  "id": "links",
+  "name": "Link Directory",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "links.create",
+    "links.manage"
+  ],
+  "nav": [
+    { "label": "Links", "route": "/links" }
+  ],
+  "admin_nav": [
+    { "label": "Link Directory", "route": "/admin/links", "capability": "links.manage" }
+  ],
+  "blocks": []
+}

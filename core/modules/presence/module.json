@@ -1,0 +1,13 @@
+{
+  "id": "presence",
+  "name": "Who's Online",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [],
+  "nav": [
+    { "label": "Who's Online", "route": "/online" }
+  ],
+  "admin_nav": [],
+  "blocks": ["presence.whosonline"]
+}

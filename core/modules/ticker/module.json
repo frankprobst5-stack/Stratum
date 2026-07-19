@@ -1,0 +1,15 @@
+{
+  "id": "ticker",
+  "name": "Ticker",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [
+    "ticker.manage"
+  ],
+  "nav": [],
+  "admin_nav": [
+    { "label": "Ticker", "route": "/admin/ticker", "capability": "ticker.manage" }
+  ],
+  "blocks": ["ticker.messages"]
+}

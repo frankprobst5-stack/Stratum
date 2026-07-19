@@ -1,0 +1,15 @@
+{
+  "id": "sponsors",
+  "name": "Sponsor Blocks",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "sponsors.manage"
+  ],
+  "nav": [],
+  "admin_nav": [
+    { "label": "Sponsor Blocks", "route": "/admin/sponsors", "capability": "sponsors.manage" }
+  ],
+  "blocks": ["sponsors.strip"]
+}

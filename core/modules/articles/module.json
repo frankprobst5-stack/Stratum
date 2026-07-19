@@ -1,0 +1,15 @@
+{
+  "id": "articles",
+  "name": "Articles",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["comments"],
+  "provides_capabilities": ["articles.manage"],
+  "nav": [
+    { "label": "Articles", "route": "/articles" }
+  ],
+  "admin_nav": [
+    { "label": "Articles", "route": "/admin/articles", "capability": "articles.manage" }
+  ],
+  "blocks": ["articles.latest_content"]
+}

@@ -1,0 +1,7 @@
+{
+  "id": "default",
+  "name": "Stratum Default",
+  "version": "0.1.0",
+  "parent": null,
+  "description": "Core theme shipped with Stratum. Modify via overrides/ rather than editing module templates directly — see docs/theme-block-system.md."
+}

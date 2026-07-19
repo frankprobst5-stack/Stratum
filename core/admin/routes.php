@@ -1,0 +1,110 @@
+<?php
+
+declare(strict_types=1);
+
+use Stratum\Admin\AuditLogController;
+use Stratum\Admin\BackupController;
+use Stratum\Admin\BadgesController;
+use Stratum\Admin\BlockPlacementsController;
+use Stratum\Admin\CacheController;
+use Stratum\Admin\DashboardController;
+use Stratum\Admin\LogViewerController;
+use Stratum\Admin\ModulesController;
+use Stratum\Admin\NavMenuController;
+use Stratum\Admin\RolesController;
+use Stratum\Admin\SettingsController;
+use Stratum\Admin\SystemHealthController;
+use Stratum\Admin\SystemUpdateController;
+use Stratum\Admin\ThemesController;
+use Stratum\Admin\TrashController;
+use Stratum\Admin\UsersController;
+
+/**
+ * @var \Stratum\Core\Router $router
+ * @var \Stratum\Core\App $app
+ */
+
+$dashboard = new DashboardController($app);
+$modules = new ModulesController($app);
+$settings = new SettingsController($app);
+$roles = new RolesController($app);
+$users = new UsersController($app);
+$systemUpdate = new SystemUpdateController($app);
+$systemHealth = new SystemHealthController($app);
+$logViewer = new LogViewerController($app);
+$backup = new BackupController($app);
+$auditLog = new AuditLogController($app);
+$cache = new CacheController($app);
+$trash = new TrashController($app);
+$themes = new ThemesController($app);
+$badges = new BadgesController($app);
+$blockPlacements = new BlockPlacementsController($app);
+$navMenu = new NavMenuController($app);
+
+$router->get('/admin', [$dashboard, 'index']);
+$router->post('/admin/notes', [$dashboard, 'addNote']);
+$router->post('/admin/notes/{id}/delete', [$dashboard, 'deleteNote']);
+$router->get('/admin/modules', [$modules, 'index']);
+$router->get('/admin/modules/dependencies', [$modules, 'dependencies']);
+$router->post('/admin/modules/{id}/toggle', [$modules, 'toggle']);
+$router->post('/admin/modules/addons/upload', [$modules, 'uploadAddon']);
+$router->post('/admin/modules/addons/{id}/delete', [$modules, 'deleteAddon']);
+$router->get('/admin/modules/addons/starter', [$modules, 'downloadAddonStarter']);
+$router->get('/admin/settings', [$settings, 'index']);
+$router->post('/admin/settings', [$settings, 'update']);
+$router->post('/admin/settings/header-banner', [$settings, 'uploadHeaderBanner']);
+$router->post('/admin/settings/header-banner/revert', [$settings, 'revertHeaderBanner']);
+$router->get('/admin/roles', [$roles, 'index']);
+$router->post('/admin/roles', [$roles, 'update']);
+$router->get('/admin/roles/audit', [$roles, 'audit']);
+$router->post('/admin/roles/create', [$roles, 'createRole']);
+$router->get('/admin/users', [$users, 'index']);
+$router->get('/admin/users/create', [$users, 'showCreate']);
+$router->post('/admin/users/create', [$users, 'create']);
+$router->get('/admin/users/merge', [$users, 'showMerge']);
+$router->post('/admin/users/merge', [$users, 'merge']);
+$router->post('/admin/users/{id}/roles', [$users, 'updateRoles']);
+$router->get('/admin/users/{id}', [$users, 'show']);
+$router->post('/admin/users/{id}/notes', [$users, 'addNote']);
+$router->post('/admin/users/{id}/notes/{noteId}/delete', [$users, 'deleteNote']);
+$router->post('/admin/users/{id}/badges', [$users, 'awardBadge']);
+$router->post('/admin/users/{id}/badges/{badgeId}/revoke', [$users, 'revokeBadge']);
+$router->post('/admin/users/{id}/delete', [$users, 'deleteAccount']);
+$router->post('/admin/users/{id}/restore', [$users, 'restoreAccount']);
+$router->get('/admin/system/update', [$systemUpdate, 'index']);
+$router->post('/admin/system/update', [$systemUpdate, 'upload']);
+$router->post('/admin/system/update/check', [$systemUpdate, 'checkForUpdate']);
+$router->get('/admin/system/health', [$systemHealth, 'index']);
+$router->get('/admin/system/logs', [$logViewer, 'index']);
+$router->post('/admin/system/logs/clear', [$logViewer, 'clear']);
+$router->get('/admin/system/backups', [$backup, 'index']);
+$router->post('/admin/system/backups/create', [$backup, 'create']);
+$router->get('/admin/system/backups/{filename}/download', [$backup, 'download']);
+$router->post('/admin/system/backups/{filename}/delete', [$backup, 'delete']);
+$router->get('/admin/system/audit-log', [$auditLog, 'index']);
+$router->get('/admin/system/cache', [$cache, 'index']);
+$router->post('/admin/system/cache/clear', [$cache, 'clear']);
+$router->get('/admin/trash', [$trash, 'index']);
+$router->post('/admin/trash/restore', [$trash, 'restore']);
+$router->get('/admin/themes', [$themes, 'index']);
+$router->post('/admin/themes/upload', [$themes, 'upload']);
+$router->post('/admin/themes/create-child', [$themes, 'createChild']);
+$router->get('/admin/themes/starter', [$themes, 'downloadStarter']);
+$router->post('/admin/themes/{id}/activate', [$themes, 'activate']);
+$router->post('/admin/themes/{id}/delete', [$themes, 'delete']);
+$router->get('/admin/badges', [$badges, 'index']);
+$router->post('/admin/badges', [$badges, 'create']);
+$router->get('/admin/blocks', [$blockPlacements, 'index']);
+$router->post('/admin/blocks/api/create', [$blockPlacements, 'apiCreate']);
+$router->post('/admin/blocks/api/move', [$blockPlacements, 'apiMove']);
+$router->post('/admin/blocks/{id}/config', [$blockPlacements, 'saveConfig']);
+$router->post('/admin/blocks/{id}/move-up', [$blockPlacements, 'moveUp']);
+$router->post('/admin/blocks/{id}/move-down', [$blockPlacements, 'moveDown']);
+$router->post('/admin/blocks/{id}/toggle', [$blockPlacements, 'toggle']);
+$router->post('/admin/blocks/{id}/delete', [$blockPlacements, 'delete']);
+$router->get('/admin/menu', [$navMenu, 'index']);
+$router->post('/admin/menu/create', [$navMenu, 'create']);
+$router->post('/admin/menu/{id}/update', [$navMenu, 'update']);
+$router->post('/admin/menu/{id}/move-up', [$navMenu, 'moveUp']);
+$router->post('/admin/menu/{id}/move-down', [$navMenu, 'moveDown']);
+$router->post('/admin/menu/{id}/delete', [$navMenu, 'delete']);

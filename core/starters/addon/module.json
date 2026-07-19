@@ -1,0 +1,13 @@
+{
+  "id": "my_addon",
+  "name": "My Addon",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": [],
+  "nav": [
+    { "label": "My Addon", "route": "/my-addon" }
+  ],
+  "admin_nav": [],
+  "blocks": []
+}

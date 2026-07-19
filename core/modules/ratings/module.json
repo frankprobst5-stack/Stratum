@@ -1,0 +1,11 @@
+{
+  "id": "ratings",
+  "name": "Ratings",
+  "version": "1.0.0",
+  "core": false,
+  "requires": [],
+  "provides_capabilities": ["ratings.create"],
+  "nav": [],
+  "admin_nav": [],
+  "blocks": []
+}
