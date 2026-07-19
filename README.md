@@ -111,5 +111,12 @@ contributing, open an issue or reach out directly.
 
 ## License
 
-Proprietary — all rights reserved. See `composer.json`. Contact the
-maintainer for licensing/collaboration inquiries.
+[GNU Affero General Public License v3.0 (or later)](LICENSE).
+
+Free to use, modify, and self-host. The one obligation: if you run a
+modified version of this as a network service — including as a hosted/
+cloud offering — you're required to make that modified source available
+to the people using it. That's the AGPL's whole purpose: it keeps this
+free for everyone, including from anyone (a company, a cloud provider,
+anyone) taking it, improving it, and hosting it without sharing those
+improvements back.

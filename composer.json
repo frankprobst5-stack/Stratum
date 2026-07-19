@@ -2,7 +2,7 @@
     "name": "stratum/cms",
     "description": "Stratum CMS — a modular, community-first portal platform for clubs and associations.",
     "type": "project",
-    "license": "proprietary",
+    "license": "AGPL-3.0-or-later",
     "require": {
         "php": ">=8.2"
     },
