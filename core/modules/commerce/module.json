@@ -1,0 +1,17 @@
+{
+  "id": "commerce",
+  "name": "Shop",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users", "downloads"],
+  "provides_capabilities": [
+    "commerce.manage"
+  ],
+  "nav": [
+    { "label": "Shop", "route": "/shop" }
+  ],
+  "admin_nav": [
+    { "label": "Shop", "route": "/admin/commerce", "capability": "commerce.manage" }
+  ],
+  "blocks": []
+}

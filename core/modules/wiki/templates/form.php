@@ -41,7 +41,7 @@
     <p>
         <label for="body">Body</label><br>
         <textarea id="body" name="body" rows="12" cols="60" required data-bbcode-toolbar><?= e($body) ?></textarea><br>
-        <small style="color:#666;">Supports [b] [i] [u] [url] [quote] [code]</small>
+        <small class="strat-muted">Supports [b] [i] [u] [url] [quote] [code]</small>
     </p>
 
     <?php if ($page !== null): ?>

@@ -17,7 +17,7 @@ $maybe = array_filter($attendees, static fn (array $a): bool => $a['status'] ===
 <p><a href="<?= e(route('/calendar/' . $event['calendar_slug'])) ?>">&larr; <?= e($event['calendar_name']) ?></a></p>
 
 <h1><?= e($event['title']) ?></h1>
-<p style="color:#666;">
+<p class="strat-muted">
     <?= e($event['starts_at']) ?><?php if (!empty($event['ends_at'])): ?> &ndash; <?= e($event['ends_at']) ?><?php endif; ?>
     <?php if (!empty($event['location'])): ?>
         <br>📍 <?= e($event['location']) ?>
@@ -56,7 +56,7 @@ $maybe = array_filter($attendees, static fn (array $a): bool => $a['status'] ===
         <?php endforeach; ?>
     </form>
 <?php elseif ($isLoggedIn): ?>
-    <p style="color:#888;">You don't have permission to RSVP.</p>
+    <p class="strat-muted">You don't have permission to RSVP.</p>
 <?php else: ?>
     <p><a href="<?= e(route('/login')) ?>">Log in</a> to RSVP.</p>
 <?php endif; ?>
@@ -72,21 +72,24 @@ $maybe = array_filter($attendees, static fn (array $a): bool => $a['status'] ===
 
 <?php if ($canManage): ?>
     <h2>Attendance (<?= count($attendance) ?> checked in)</h2>
-    <p style="color:#888; font-size:0.9rem;">Who actually showed up — separate from RSVP, and works for walk-ins who never RSVP'd.</p>
+    <p class="strat-muted">Who actually showed up — separate from RSVP, and works for walk-ins who never RSVP'd.</p>
 
     <?php if ($attendance !== []): ?>
-        <ul>
+        <div class="strat-list">
             <?php foreach ($attendance as $row): ?>
-                <li>
-                    <?= e($row['username']) ?>
-                    <small style="color:#888;">(<?= e($row['checked_in_at']) ?>)</small>
-                    <form method="post" action="<?= e(route('/calendar/events/' . $event['id'] . '/attendance/' . $row['user_id'] . '/remove')) ?>" style="display:inline;">
+                <div class="strat-list-row">
+                    <div class="strat-avatar"><?= e(strtoupper(substr((string) $row['username'], 0, 2))) ?></div>
+                    <div class="strat-list-row-main">
+                        <div class="strat-list-row-title"><?= e($row['username']) ?></div>
+                        <div class="strat-list-row-meta"><?= e($row['checked_in_at']) ?></div>
+                    </div>
+                    <form method="post" action="<?= e(route('/calendar/events/' . $event['id'] . '/attendance/' . $row['user_id'] . '/remove')) ?>">
                         <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
-                        <button type="submit" style="border:none; background:none; color:#888; text-decoration:underline; cursor:pointer; padding:0; font-size:0.85rem;">Remove</button>
+                        <button type="submit" style="border:none; background:none; color:var(--strat-muted-text); text-decoration:underline; cursor:pointer; padding:0; font-size:0.85rem;">Remove</button>
                     </form>
-                </li>
+                </div>
             <?php endforeach; ?>
-        </ul>
+        </div>
     <?php endif; ?>
 
     <form method="post" action="<?= e(route('/calendar/events/' . $event['id'] . '/attendance')) ?>">
@@ -102,10 +105,9 @@ $maybe = array_filter($attendees, static fn (array $a): bool => $a['status'] ===
 <h2>Comments (<?= count($comments) ?>)</h2>
 
 <?php foreach ($comments as $comment): ?>
-    <div style="margin-bottom:1rem; padding:0.75rem; background:#f4f5f7; border-radius:6px;">
-        <strong><?= e($comment['authorName']) ?></strong>
-        <span style="color:#888; font-size:0.85rem;"> &middot; <?= e($comment['created_at']) ?></span>
-        <p style="white-space:pre-wrap; margin:0.5rem 0 0;"><?= e($comment['body']) ?></p>
+    <div class="strat-inline-box">
+        <div class="strat-inline-box-meta"><strong><?= e($comment['authorName']) ?></strong> <span class="strat-muted">&middot; <?= e($comment['created_at']) ?></span></div>
+        <p class="strat-inline-box-body"><?= e($comment['body']) ?></p>
     </div>
 <?php endforeach; ?>
 
@@ -122,7 +124,7 @@ $maybe = array_filter($attendees, static fn (array $a): bool => $a['status'] ===
         <button type="submit">Post comment</button>
     </form>
 <?php elseif ($isLoggedIn): ?>
-    <p style="color:#888;">You don't have permission to comment.</p>
+    <p class="strat-muted">You don't have permission to comment.</p>
 <?php else: ?>
     <p><a href="<?= e(route('/login')) ?>">Log in</a> to comment.</p>
 <?php endif; ?>

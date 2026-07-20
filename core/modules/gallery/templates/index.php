@@ -10,20 +10,20 @@
     <p><a href="<?= e(route('/gallery/create')) ?>">Create an album</a></p>
 <?php endif; ?>
 
-<ul>
-    <?php foreach ($albums as $album): ?>
-        <li style="margin-bottom:1rem;">
-            <?php if ($album['coverPhoto'] !== null): ?>
-                <a href="<?= e(route('/gallery/albums/' . $album['id'])) ?>">
-                    <img src="<?= e(route('/gallery/photos/' . $album['coverPhoto']['id'] . '/thumbnail')) ?>" alt="" width="150">
-                </a>
-            <?php endif; ?>
-            <br>
-            <a href="<?= e(route('/gallery/albums/' . $album['id'])) ?>"><?= e($album['title']) ?></a>
-            <small style="color:#888;">(<?= (int) $album['photoCount'] ?> photos)</small>
-        </li>
-    <?php endforeach; ?>
-    <?php if ($albums === []): ?>
-        <li style="color:#888;">No albums yet.</li>
-    <?php endif; ?>
-</ul>
+<?php if ($albums === []): ?>
+    <p class="strat-muted">No albums yet.</p>
+<?php else: ?>
+    <div class="strat-photo-grid">
+        <?php foreach ($albums as $album): ?>
+            <a class="strat-photo-tile" href="<?= e(route('/gallery/albums/' . $album['id'])) ?>">
+                <?php if ($album['coverPhoto'] !== null): ?>
+                    <img src="<?= e(route('/gallery/photos/' . $album['coverPhoto']['id'] . '/thumbnail')) ?>" alt="">
+                <?php endif; ?>
+                <div class="strat-photo-tile-caption">
+                    <strong><?= e($album['title']) ?></strong>
+                    <span class="strat-muted"><?= (int) $album['photoCount'] ?> photos</span>
+                </div>
+            </a>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>

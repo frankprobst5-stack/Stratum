@@ -8,16 +8,21 @@
 <p><a href="<?= e(route('/wiki/create')) ?>">+ New page</a></p>
 
 <?php if ($pages === []): ?>
-    <p>No wiki pages yet.</p>
+    <p class="strat-muted">No wiki pages yet.</p>
+<?php else: ?>
+    <div class="strat-list">
+        <?php foreach ($pages as $page): ?>
+            <div class="strat-list-row">
+                <div class="strat-list-row-icon" aria-hidden="true">📄</div>
+                <div class="strat-list-row-main">
+                    <div class="strat-list-row-title">
+                        <a href="<?= e(route('/wiki/' . $page['slug'])) ?>"><?= e($page['title']) ?></a>
+                    </div>
+                    <?php if (!empty($page['categoryName'])): ?>
+                        <div class="strat-list-row-meta"><?= e($page['categoryName']) ?></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
 <?php endif; ?>
-
-<ul>
-    <?php foreach ($pages as $page): ?>
-        <li>
-            <a href="<?= e(route('/wiki/' . $page['slug'])) ?>"><?= e($page['title']) ?></a>
-            <?php if (!empty($page['categoryName'])): ?>
-                <small style="color:#888;">(<?= e($page['categoryName']) ?>)</small>
-            <?php endif; ?>
-        </li>
-    <?php endforeach; ?>
-</ul>

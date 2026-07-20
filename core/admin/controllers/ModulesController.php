@@ -83,7 +83,7 @@ final class ModulesController extends AdminController
             return Response::redirect('/admin/modules?error=' . rawurlencode('No file was uploaded.'));
         }
 
-        $installer = new AddonPackageInstaller($this->app->rootDir . '/core/modules', $this->app->rootDir . '/storage/addons');
+        $installer = new AddonPackageInstaller($this->app->db, $this->app->rootDir . '/core/modules', $this->app->rootDir . '/storage/addons');
 
         try {
             $installer->install($file['tmp_name']);
@@ -119,7 +119,7 @@ final class ModulesController extends AdminController
         }
 
         $this->app->modules->forgetCustomModule($id);
-        (new AddonPackageInstaller($this->app->rootDir . '/core/modules', $this->app->rootDir . '/storage/addons'))->remove($id);
+        (new AddonPackageInstaller($this->app->db, $this->app->rootDir . '/core/modules', $this->app->rootDir . '/storage/addons'))->remove($id);
 
         return Response::redirect('/admin/modules');
     }

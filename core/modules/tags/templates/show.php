@@ -14,14 +14,18 @@ $typeLabels = [
 <h1>Tagged &ldquo;<?= e($tag['name']) ?>&rdquo;</h1>
 
 <?php if ($items === []): ?>
-    <p style="color:#888;">Nothing tagged with this yet.</p>
+    <p class="strat-muted">Nothing tagged with this yet.</p>
 <?php else: ?>
-    <ul>
+    <div class="strat-list">
         <?php foreach ($items as $item): ?>
-            <li style="margin-bottom:0.5rem;">
-                <small style="color:#888;">[<?= e($typeLabels[$item['type']] ?? $item['type']) ?>]</small>
-                <a href="<?= e(route($item['url'])) ?>"><?= e($item['title']) ?></a>
-            </li>
+            <div class="strat-list-row">
+                <div class="strat-list-row-main">
+                    <div class="strat-list-row-title">
+                        <a href="<?= e(route($item['url'])) ?>"><?= e($item['title']) ?></a>
+                    </div>
+                </div>
+                <span class="strat-pill" data-tone="neutral"><?= e($typeLabels[$item['type']] ?? $item['type']) ?></span>
+            </div>
         <?php endforeach; ?>
-    </ul>
+    </div>
 <?php endif; ?>

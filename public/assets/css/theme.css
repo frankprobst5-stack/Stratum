@@ -321,10 +321,51 @@ footer { text-align: center; padding: 1.5rem; color: var(--strat-muted-text); fo
 .strat-poll-bar-track { background: var(--strat-dropdown-hover-bg); border-radius: 3px; height: 8px; overflow: hidden; }
 .strat-poll-bar-fill { background: var(--strat-accent); height: 8px; }
 
+/*
+ * Content-page pass, part 2, 2026-07-19 — wiki/calendar/tags/gallery/chat.
+ * New components below; everything above this point was already shared
+ * by forum/downloads.
+ */
+
+/* Inline box — comments on wiki pages/events/photos. Simpler than .strat-post: no avatar column, no signature/footer. */
+.strat-inline-box { padding: 0.75rem; background: var(--strat-card-bg); border: 1px solid var(--strat-card-border); border-radius: var(--strat-radius-sm); margin-bottom: 0.75rem; }
+.strat-inline-box-meta { font-size: 0.78rem; margin-bottom: 0.35rem; }
+.strat-inline-box-body { white-space: pre-wrap; margin: 0; }
+
+/* Photo/album grid — gallery index (albums) and album view (photos). Cards, not list rows: images read better side-by-side than full-width. */
+.strat-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; margin: 0 0 1.5rem; }
+.strat-photo-tile { display: block; border-radius: var(--strat-radius-sm); overflow: hidden; background: var(--strat-card-bg); border: 1px solid var(--strat-card-border); text-decoration: none; color: var(--strat-text); }
+.strat-photo-tile img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
+.strat-photo-tile-caption { padding: 0.5rem 0.6rem; font-size: 0.85rem; }
+.strat-photo-tile-caption strong { display: block; }
+
+/* Chat — room list reuses .strat-list; this is the message window itself. */
+.strat-chat-window { border: 1px solid var(--strat-card-border); border-radius: var(--strat-radius-sm); padding: 0.75rem; height: 22rem; overflow-y: auto; margin-bottom: 0.75rem; background: var(--strat-card-bg); display: flex; flex-direction: column; gap: 0.35rem; }
+.strat-chat-message { display: flex; gap: 0.5rem; align-items: baseline; font-size: 0.92rem; }
+.strat-chat-message-author { font-weight: 600; flex-shrink: 0; }
+.strat-chat-message-body { word-break: break-word; }
+.strat-chat-message.is-action { color: var(--strat-muted-text); font-style: italic; }
+.strat-chat-message.is-action .strat-chat-message-author { font-weight: 600; font-style: normal; }
+
 @media (max-width: 620px) {
     /* Labels stay visible — an icon alone doesn't self-explain what it links to. */
     .site-topbar-inner { flex-wrap: wrap; gap: 0.4rem; }
-    .topbar-nav { order: 3; flex-basis: 100%; }
+    /*
+     * Real bug, found live 2026-07-19: .topbar-nav's own `overflow:
+     * hidden` + its <ul>'s `flex-wrap: nowrap` (both fine on desktop,
+     * where the row is wide enough) meant that once the nav dropped to
+     * its own full-width row here, the primary items + "More" trigger
+     * routinely didn't fit — the overflow got silently clipped, taking
+     * the "More" button (and its whole dropdown panel, including every
+     * "more"-placement nav item like Links) off-screen and unreachable.
+     * Confirmed via a real 375px-viewport check: the trigger's own
+     * bounding box was already past the right edge of the viewport.
+     * Letting the <ul> wrap instead of clip fixes it structurally,
+     * rather than just repositioning the dropdown panel of a trigger
+     * that was itself off-screen.
+     */
+    .topbar-nav { order: 3; flex-basis: 100%; overflow: visible; }
+    .topbar-nav ul { flex-wrap: wrap; }
     .strat-list-row { flex-wrap: wrap; }
     .strat-list-row-lastpost { text-align: left; min-width: 0; width: 100%; }
     .strat-post { flex-direction: column; }

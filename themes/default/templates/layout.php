@@ -106,7 +106,7 @@ $userInitials = $currentUser !== null ? strtoupper(substr((string) $currentUser[
     <?php endif; ?>
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
     <link rel="apple-touch-icon" href="/assets/images/icon-circle.png">
-    <link rel="stylesheet" href="/assets/css/theme.css?v=3">
+    <link rel="stylesheet" href="/assets/css/theme.css?v=5">
     <?php /* raw(), not e(): <style> is an HTML5 "raw text" element — entities like &quot; are NOT decoded inside it, so escaping a quoted font name (e.g. "Times New Roman") would emit literal &quot; characters and break the declaration. Safe here because $fontStackCss only ever comes from FontStacks::cssFor()'s own fixed, hardcoded OPTIONS map — never directly from user input. Only these two values are genuinely per-install-dynamic — everything else lives in theme.css, see docs/design-system.md. */ ?>
     <style>:root { --strat-accent: <?= e($accentColor) ?>; --strat-font: <?= raw($fontStackCss) ?>; }</style>
     <?php if ($darkMode === 'auto'): ?>

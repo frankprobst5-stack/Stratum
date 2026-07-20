@@ -1786,18 +1786,15 @@ design notes preserved in project memory) — full unanimous approval, up
 from an initial 7/8 earlier the same day. Some clubs are calling it a
 "mini club magazine" rather than a newsletter; the existing Issue design
 serves both framings without any change, it's a naming/marketing
-difference per club, not a design fork. Still going in as an **addon**,
-not core, per the plan above — confirmed, not reopened. Still not built
-or migrated into a concrete implementation plan yet, and deliberately
-not scheduled into the current Stage 7→8 sequence ("attack later," the
-user's words). Also confirmed during blocks/widgets planning the same
-day: an addon can register its own block via `registerBlocks(BlockRegistry
-$blocks)` in its `Module.php`, identically to how `ads`/`sponsors`/
-`ticker` do it — `ModuleManager::boot()` doesn't distinguish an addon
-from a built-in module for this purpose. A "Current/Latest Issue" block
-is now formally part of the confirmed Stage 8 block library (see that
-entry below) rather than just a footnote — it ships once the newsletter
-addon itself is built, not with the core v1 block library.
+difference per club, not a design fork. Went in as an **addon**, not
+core, per the plan above. ✅ **Built and shipped 2026-07-19** — see
+"Newsletter / Mini-Mag Addon" below for the full writeup. Confirmed
+during blocks/widgets planning: an addon can register its own block via
+`registerBlocks(BlockRegistry $blocks)` in its `Module.php`, identically
+to how `ads`/`sponsors`/`ticker` do it — `ModuleManager::boot()` doesn't
+distinguish an addon from a built-in module for this purpose. The
+"Current/Latest Issue" block shipped with the addon itself, exactly as
+planned.
 
 **The core design decision, and why it's safe despite sounding
 alarming**: in this codebase, both modules and themes already execute
@@ -5329,16 +5326,12 @@ dues remains an open question, not a commitment.
   above). Full writeup above.
 - Digital downloads tied to commerce/paywall (distinct from the free
   `downloads` module — vision notes list this separately from file
-  repository). **Deliberately not started** — needs a real decision on
-  payment gateway/provider before any code gets written (unlike every
-  other item in this backlog, this one has real financial/security
-  stakes and can't be scoped by inference the way UI-only features can).
-  Flagged for the user rather than guessed at.
+  repository) ✅ — SHIPPED 2026-07-19, payment gateway confirmed as Cash
+  App (the same manual-confirmation gateway `dues`/`donations` already
+  use). Full writeup below, "Commerce/Paywall Downloads" section.
 - RSS "auto articles" ✅ — SHIPPED 2026-07-17. Full writeup above.
 
-**Media & commerce parity: 4 of 5 items shipped. The 5th (commerce/
-paywall downloads) is intentionally still open pending a payment
-provider decision.**
+**Media & commerce parity: 5 of 5 items shipped.**
 
 ### Admin system parity (fits Stage 10 — mostly not started)
 
@@ -5493,13 +5486,9 @@ settled scope here.
   - **Escape hatches**: HTML block (admin-only capability — raw markup,
     no PHP/SQL execution, matching the security stance below), Text/
     Markdown block (safe for any editor-level user).
-  - **Newsletter (all 8/8 clubs signed off 2026-07-18 — see "Addons &
-    Themes" above)**: Current/Latest Issue block — **ships with the
-    newsletter addon itself, not with the core v1 block library**, since
-    newsletter stays an addon by design. Listed here because it's now a
-    confirmed, formally-scoped part of the block ecosystem rather than a
-    footnote — not because it's part of this build pass. Registers via
-    the addon's own `Module.php` exactly like `ads`/`sponsors` do.
+  - **Newsletter** ✅ — SHIPPED 2026-07-19 as `newsletter.current_issue`,
+    registered via the addon's own `Module.php` exactly like
+    `ads`/`sponsors` do. See "Newsletter / Mini-Mag Addon" below.
   - **Chat (Stage 9, not built yet)**: Available Chat Rooms block —
     ships with the built-in `chat` module once Stage 9 is built, public
     rooms only. Full note under Stage 9's chat design section below.
@@ -5529,11 +5518,6 @@ settled scope here.
     Backup Manager, Update Checker, Built-in SEO). Don't rebuild as a
     second UI; if anything, surface a summary on the existing `/admin`
     dashboard panel grid.
-  - **Newsletter blocks** — not cut, just not v1: newsletter is confirmed
-    going forward as its own addon (see "Addons & Themes" above), and its
-    "Current Issue" block will register the same way `ads`/`sponsors`
-    already do once that addon actually gets built. Not part of the core
-    block library.
 - **The #1 constraint carried over from the chat design work, restated by
   the user 2026-07-18**: this all has to run smoothly on shared hosting —
   a real number of the 8 migrating clubs can't afford anything better.
@@ -6228,6 +6212,220 @@ index/downloads show, all 200) both clean.
 (wiki/calendar/tags/gallery/chat) — same component vocabulary, next
 slice, per the established "verify in slices" sequencing, not attempted
 in one pass.
+
+## Content-Page Pass, Second Slice: Wiki, Calendar, Gallery, Tags, Chat ✅ (SHIPPED 2026-07-19)
+
+**Why**: the follow-up to the forum/downloads slice above, closing out
+the last of the "every content page still looks like a bare `<h1>` and
+an unstyled list" gap. Same reasoning as before — reuse the existing
+component vocabulary everywhere it already fits, and only add new
+components where the content genuinely needs a different shape (a photo
+grid isn't a list of rows; a chat window isn't a forum post).
+
+**Two components finished the vocabulary `docs/design-system.md`
+documented but hadn't built yet**: `.strat-inline-box` (a simpler
+sibling to `.strat-post` — author/timestamp/body only, no avatar
+sidebar or footer actions) finally replaces the `background:#f4f5f7;
+border-radius:6px` comment-box snippet that had been copy-pasted inline
+across wiki/calendar/gallery comment sections. `.strat-pill` (already
+built for forum) now also covers wiki page tags and the site-wide tag
+cloud, replacing the last two copies of that same inline tag-pill
+snippet the design doc had flagged.
+
+**Two genuinely new components, not in the original doc** — the content
+shape didn't fit anything that already existed: `.strat-photo-grid`/
+`.strat-photo-tile` (gallery album covers and individual photos read as
+a responsive image grid, not full-width list rows — `.strat-list` was
+the wrong shape here, not just an unstyled one) and `.strat-chat-window`/
+`.strat-chat-message` (the chat message log needed its own scrollable
+container and a compact author-inline-with-body bubble shape, distinct
+from a forum post's avatar-sidebar layout; `/me` action messages get a
+muted-italic variant via one `.is-action` modifier class rather than a
+second component).
+
+**Applied to all 5 modules' public templates** (13 files): `wiki/index.php`
+(page list → `.strat-list`), `wiki/show.php` (tags → `.strat-pill`,
+comments → `.strat-inline-box`), `wiki/history.php` (revision table →
+`.strat-list`), `wiki/revision.php` + `form.php` (muted-text cleanup
+only); `calendar/index.php` + `calendar.php` (day-grouped event lists →
+`.strat-list`), `calendar/event.php` (comments → `.strat-inline-box`,
+attendance list → `.strat-list` with avatar initials, RSVP/muted-text
+cleanup); `gallery/index.php` (albums → `.strat-photo-grid`, each tile a
+cover thumbnail + title + count), `gallery/album.php` (photos →
+`.strat-photo-grid`), `gallery/photo.php` (comments →
+`.strat-inline-box`); `tags/index.php` (tag cloud → `.strat-pill`),
+`tags/show.php` (tagged-item list → `.strat-list` with a type pill);
+`chat/index.php` (room list → `.strat-list`, member-room badge as a
+pill), `chat/room.php` (message log → `.strat-chat-window`, member list
+→ `.strat-list`), `chat/message.php` (the same fragment the AJAX
+post/poll endpoints already share → `.strat-chat-message`, both normal
+and `/me`-action variants). Every hardcoded `color:#888`/`#666`/`#999`
+touched in this pass became `class="strat-muted"` (already defined,
+just newly applied consistently) rather than a new one-off style
+attribute. All functional logic — comment/RSVP/attendance/like/join/
+leave/invite forms, the chat AJAX post-and-poll loop — preserved exactly;
+only markup changed.
+
+**Verification**: full `php -l` sweep across all 13 files clean.
+`theme.css` bumped to `?v=4`. Live via the real browser preview, logged
+in as `modtest_member`: confirmed via real `getComputedStyle` checks
+(not just that the classes were present in markup) that every new
+component actually renders its CSS — `.strat-list-row`'s border/padding,
+`.strat-photo-grid`'s grid-template-columns, `.strat-inline-box`'s
+background/border/radius/padding, and `.strat-chat-window`/
+`.strat-chat-message`'s border/background/height/flex-gap and the
+`.is-action` variant's muted-italic styling all resolved correctly. The
+chat check was end-to-end through the real flow, not just static markup:
+created a real room, posted a real message and a real `/me` action
+through the actual `/chat/rooms/{id}/messages` endpoint, confirmed both
+rendered with the correct classes in the AJAX JSON response and in the
+room page's initial HTML (same shared `message.php` fragment, so no
+drift between the two paths), then left the room to confirm Stage 9's
+auto-delete-when-empty behavior still fires correctly. Wiki/calendar/
+gallery/tags list pages spot-checked live with real seeded test content.
+Dev server stopped clean at the end with no errors in its log.
+
+**Deliberately not built in this slice**: the admin panel's own
+`<style>` block getting the same CSS-externalization treatment — still
+lower priority, still a working (if inline) design system, unaffected by
+either content-page slice.
+
+## Commerce/Paywall Downloads ✅ (SHIPPED 2026-07-19)
+
+**Why**: the last open item in the Vision Parity Backlog's "Media &
+commerce parity" section — blocked since 2026-07-17 on a real payment
+gateway decision, deliberately not guessed at given the financial/security
+stakes. Confirmed 2026-07-19: **Cash App**, the same gateway `dues`/
+`donations` already use.
+
+**New module `commerce`, composing over `downloads` rather than modifying
+it** — the backlog entry itself calls this out as distinct from the free
+`downloads` module, and reusing `DownloadService`'s existing public methods
+(`findFile()`, `currentVersion()`, `absolutePath()`) instead of touching
+`DownloadsController` at all means **zero regression risk** to the
+already-shipped free downloads feature; nothing in `core/modules/downloads/`
+changed. An admin picks an *existing* `downloads_files` row to sell — no
+separate upload path, no duplicated file storage.
+
+**Exact reuse of the `donations` pending→confirmed pattern**, not a new
+design: `commerce_products` (wraps a `downloads_files` row with `price` +
+a Cash App `payment_url`) and `commerce_purchases` (`pending`/`confirmed`
+status, `amount`/`notes`/`recorded_by`/`confirmed_at` — identical shape to
+`donation_contributions`). `CommerceService::recordIntent()`/
+`confirmPurchase()` mirror `DonationService::recordIntent()`/
+`confirmContribution()` line for line. `hasPurchased()` is a plain
+`WHERE user_id=? AND product_id=? AND status='confirmed'` query, modeled
+on `DuesService::currentPaymentForPlan()` minus the `expires_at` clause (a
+one-time purchase never expires) — **deliberately not built on
+`PermissionEngine`'s scoped-role mechanism**, confirmed via research to be
+the wrong tool here: scoped roles answer "who can act as a
+moderator/officer" (a handful of roles, each with potentially many
+members), not "did this one user pay for this one item" (a 1:1 transaction
+fact); a role-per-product would mean one throwaway role per purchasable
+file for what a single indexed query already answers, and neither
+`donations` nor `dues` reach for `PermissionEngine` for their own base
+payment lifecycle either.
+
+**The actual gate**: `GET /shop/products/{id}/download` — checks
+`hasPurchased()`, 403s if false; if true, resolves the file through
+`DownloadService` and streams it, applying the exact same
+`scan_status === 'infected'` block the free downloads module already
+enforces. This is the only place commerce code touches a downloads file
+directly, and it's entirely additive (new route in a new module) — the
+free module's own `/downloads/files/{id}/download` route is completely
+unaffected and still has zero access control, exactly as before.
+
+**Verification**: full `php -l` sweep clean. Live via curl, full purchase
+lifecycle exercised as three real accounts: as `modtest_admin`, created a
+real product from an existing download; as `modtest_member`, confirmed
+`/shop/products/{id}/download` correctly 403'd *before* purchasing,
+clicked "I've paid" (confirmed a real `pending` row), then as admin
+confirmed the purchase with a real amount; back as the member, confirmed
+the download route now genuinely streamed the actual stored file (fetched
+it, verified the returned bytes/filename matched the real
+`downloads_versions` row, not a placeholder). Confirmed the gate is
+correctly per-user, not global: a third account (`modtest_outsider`, who
+never purchased) still got 403 on the same product. All test
+products/purchases deleted afterward, confirmed via a follow-up
+zero-row query. Dev server stopped clean.
+
+## Newsletter / Mini-Mag Addon ✅ (SHIPPED 2026-07-19)
+
+**Why**: the design was signed off by all 8/8 migrating clubs on
+2026-07-18 (on-site multi-page Issue → ordered pages → table of contents
+→ Next/Previous nav, explicitly no email) but deliberately never turned
+into a concrete build ("attack later," at the time). Confirmed 2026-07-19
+to go ahead now. Some clubs call it a "newsletter," others a "mini club
+magazine" — the same `Issue` design serves both; the label difference is
+solved for free by the existing Stage 8 menu-builder's per-item label
+editing, no per-install config needed.
+
+**A real infrastructure gap found and fixed first**: `AddonPackageInstaller
+::install()` (`core/services/AddonPackageInstaller.php`) never ran an
+uploaded addon's own `migrations/` — `MigrationRunner::runAll()` only ever
+scanned `core/modules`, so any addon with its own tables (this one needs
+two) would have installed with no schema and fatal on first real use.
+Fixed by having `install()` call `MigrationRunner::run($id, ...)` right
+after the extracted addon lands in `storage/addons/{id}/`, gated on a
+`migrations/` directory actually existing. `AddonPackageInstaller` now
+takes a `Database` in its constructor (both call sites in
+`ModulesController` updated). Small, additive, benefits every future
+addon with its own schema, not scope creep specific to this feature.
+
+**Ships as a real addon, not a core module** — built at
+`storage/addons/newsletter/`, the exact directory `ModuleManager` already
+scans as its second, "custom" module source. Shaped identically to a
+built-in module (`module.json`, `Module.php`, `routes.php`, `services/`,
+`controllers/`, `templates/`, `migrations/`), pattern-matched against the
+verified `core/starters/addon/` skeleton and the real shipped `ticker`
+module (the reference for a `Module.php` that captures `$app` in its
+constructor to register a block needing `$app->db`).
+
+**Schema**: `newsletter_issues` (title, unique slug, `is_published`,
+`published_at`) and `newsletter_pages` (`issue_id` FK cascade, title,
+body, `position`) — `position` drives both the table-of-contents order
+and Next/Previous (adjacent `position` within the same issue).
+`NewsletterService::movePageUp()`/`movePageDown()` reuse the exact
+weight-swap pattern `NavMenuService::moveUp()`/`moveDown()` already
+established for the Stage 8 menu builder; `deletePage()` closes the
+position gap afterward so numbering always stays contiguous.
+
+**Body content is BBCode**, via the existing `core/services/BBCodeParser.php`
+— the same `data-bbcode-toolbar` textarea convention wiki pages and forum
+posts already use — not a new content pipeline. Two capabilities,
+deliberately separate: `newsletter.edit_issue` (write issues/pages) and
+`newsletter.publish` (publish/unpublish) — matches the naming convention
+`docs/permission-model.md` already documented as its own example
+(`newsletter.edit`), and lets a club give someone edit access without
+publish authority if it wants an editorial-review step.
+
+**Block**: `newsletter.current_issue` (`CurrentIssueBlock implements
+CardBlock`, icon 📰, accent purple) — the "Current/Latest Issue" block
+the Stage 8 block-library plan named back on 2026-07-18, shipped exactly
+as scoped: with the addon itself, registered via `Module.php`'s
+`registerBlocks()` identically to how `ticker` registers `TickerBlock`.
+
+**Verification, exercising the real installer, not a dev shortcut**:
+`php -l` sweep clean across all files. Zipped the finished addon and
+uploaded it through the actual `/admin/modules` addon-upload endpoint
+(not just placed in `storage/addons/` by hand) — confirmed it landed
+there, showed up in `/admin/modules` as "Newsletter (newsletter) — Addon
+(custom) — Enabled", and critically, confirmed via direct query that its
+migration actually ran and created both tables (proving the
+`AddonPackageInstaller` fix above works for real, not just in theory).
+As `modtest_admin`: created a real issue, added 3 real pages. As a guest:
+confirmed the unpublished issue was a real 404, not just hidden from a
+listing. Published it; confirmed the guest-visible list, the
+`/newsletter/{slug}` → `/newsletter/{slug}/1` redirect, real `[b]...[/b]`
+BBCode rendering to `<strong>`, and Next/Previous correctly present/absent
+at every boundary (page 1: Next only, page 2: both, page 3: Previous
+only, page 4: 404). TOC sidebar confirmed listing all 3 page titles.
+Dropped `newsletter.current_issue` onto the front page via a real
+`block_placements` row, confirmed it rendered the published issue's
+title with the shared card chrome, removed it. All test
+issues/pages/placements deleted afterward — issue deletion's `ON DELETE
+CASCADE` confirmed via a follow-up query showing zero rows in both
+tables. Dev server stopped clean.
 
 ## Stage 10 — Platform Hardening & API
 

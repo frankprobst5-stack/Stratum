@@ -1,0 +1,18 @@
+{
+  "id": "newsletter",
+  "name": "Newsletter",
+  "version": "1.0.0",
+  "core": false,
+  "requires": ["users"],
+  "provides_capabilities": [
+    "newsletter.edit_issue",
+    "newsletter.publish"
+  ],
+  "nav": [
+    { "label": "Newsletter", "route": "/newsletter" }
+  ],
+  "admin_nav": [
+    { "label": "Newsletter", "route": "/admin/newsletter", "capability": "newsletter.edit_issue" }
+  ],
+  "blocks": ["newsletter.current_issue"]
+}

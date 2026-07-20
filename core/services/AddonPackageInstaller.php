@@ -19,6 +19,7 @@ final class AddonPackageInstaller
     private const ID_PATTERN = '/^[a-z][a-z0-9_]*$/';
 
     public function __construct(
+        private readonly Database $db,
         private readonly string $coreModulesDir,
         private readonly string $customModulesDir
     ) {
@@ -40,7 +41,21 @@ final class AddonPackageInstaller
 
         // $this->customModulesDir is guaranteed to exist here — extraction
         // above already created it (recursively) as the staging dir's parent.
-        rename($stagingDir, "{$this->customModulesDir}/{$id}");
+        $installedDir = "{$this->customModulesDir}/{$id}";
+        rename($stagingDir, $installedDir);
+
+        // Real gap found 2026-07-19: nothing else ever runs an addon's own
+        // migrations — MigrationRunner::runAll() only scans core/modules,
+        // so an addon with its own tables (e.g. the newsletter addon)
+        // would install with no schema and fatal on first use. This is the
+        // one place an addon's install actually happens, so it's the one
+        // place this can be fixed once for every future addon.
+        $migrationsDir = "{$installedDir}/migrations";
+        if (is_dir($migrationsDir)) {
+            $runner = new MigrationRunner($this->db);
+            $runner->ensureMigrationsTable();
+            $runner->run($id, $migrationsDir);
+        }
 
         return $id;
     }

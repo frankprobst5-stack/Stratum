@@ -10,14 +10,14 @@ $roomId = (int) $room['id'];
 ?>
 <h1><?= e($room['name']) ?></h1>
 <?php if (($room['topic'] ?? null) !== null): ?>
-    <p style="color:#666;"><?= e($room['topic']) ?></p>
+    <p class="strat-muted"><?= e($room['topic']) ?></p>
 <?php endif; ?>
-<p style="color:#999; font-size:0.85rem;">
+<p class="strat-muted">
     <?= $room['visibility'] === 'private' ? 'Private room' : 'Public room' ?>
     &middot; <?= count($members) ?> member<?= count($members) === 1 ? '' : 's' ?>
 </p>
 
-<div id="strat-chat-messages" style="border:1px solid #eee; border-radius:6px; padding:0.75rem; height:22rem; overflow-y:auto; margin-bottom:0.75rem; background:var(--strat-card-bg, #fff);">
+<div id="strat-chat-messages" class="strat-chat-window">
     <?= $messagesHtml ?>
 </div>
 
@@ -41,11 +41,14 @@ $roomId = (int) $room['id'];
 
 <?php if ($members !== []): ?>
     <h2>Members</h2>
-    <ul>
+    <div class="strat-list">
         <?php foreach ($members as $member): ?>
-            <li><?= e($member['username']) ?></li>
+            <div class="strat-list-row">
+                <div class="strat-avatar"><?= e(strtoupper(substr((string) $member['username'], 0, 2))) ?></div>
+                <div class="strat-list-row-main"><div class="strat-list-row-title"><?= e($member['username']) ?></div></div>
+            </div>
         <?php endforeach; ?>
-    </ul>
+    </div>
 <?php endif; ?>
 
 <script>

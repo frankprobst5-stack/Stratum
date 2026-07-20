@@ -14,8 +14,8 @@
     <a href="<?= e(route('/wiki/' . $page['slug'])) ?>">Current version</a>
 </p>
 
-<h1><?= e($page['title']) ?> <small style="color:#888; font-weight:normal;">(revision from <?= e($revision['created_at']) ?>)</small></h1>
-<p style="color:#666; font-size:0.9rem;">
+<h1><?= e($page['title']) ?> <small class="strat-muted" style="font-weight:normal;">(revision from <?= e($revision['created_at']) ?>)</small></h1>
+<p class="strat-muted">
     by <?= e($authorName) ?>
     <?php if (!empty($revision['comment'])): ?>
         &middot; <?= e($revision['comment']) ?>

@@ -22,16 +22,17 @@
     </form>
 <?php endif; ?>
 
-<div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
-    <?php foreach ($photos as $photo): ?>
-        <a href="<?= e(route('/gallery/photos/' . $photo['id'])) ?>">
-            <img src="<?= e(route('/gallery/photos/' . $photo['id'] . '/thumbnail')) ?>" alt="<?= e($photo['caption'] ?? '') ?>" width="150">
-        </a>
-    <?php endforeach; ?>
-    <?php if ($photos === []): ?>
-        <p style="color:#888;">No photos yet.</p>
-    <?php endif; ?>
-</div>
+<?php if ($photos === []): ?>
+    <p class="strat-muted">No photos yet.</p>
+<?php else: ?>
+    <div class="strat-photo-grid">
+        <?php foreach ($photos as $photo): ?>
+            <a class="strat-photo-tile" href="<?= e(route('/gallery/photos/' . $photo['id'])) ?>">
+                <img src="<?= e(route('/gallery/photos/' . $photo['id'] . '/thumbnail')) ?>" alt="<?= e($photo['caption'] ?? '') ?>">
+            </a>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
 
 <?php if ($canUpload): ?>
     <h3>Add more photos</h3>

@@ -20,7 +20,7 @@
 <?php endif; ?>
 
 <?php if ($exif !== null): ?>
-    <p style="color:#888; font-size:0.9rem;">
+    <p class="strat-muted">
         <?php if ($exif['camera'] !== ''): ?>Camera: <?= e($exif['camera']) ?><?php endif; ?>
         <?php if ($exif['takenAt'] !== null): ?> &middot; Taken: <?= e($exif['takenAt']) ?><?php endif; ?>
     </p>
@@ -46,10 +46,9 @@
 <h2>Comments (<?= count($comments) ?>)</h2>
 
 <?php foreach ($comments as $comment): ?>
-    <div style="margin-bottom:1rem; padding:0.75rem; background:#f4f5f7; border-radius:6px;">
-        <strong><?= e($comment['authorName']) ?></strong>
-        <span style="color:#888; font-size:0.85rem;"> &middot; <?= e($comment['created_at']) ?></span>
-        <p style="white-space:pre-wrap; margin:0.5rem 0 0;"><?= e($comment['body']) ?></p>
+    <div class="strat-inline-box">
+        <div class="strat-inline-box-meta"><strong><?= e($comment['authorName']) ?></strong> <span class="strat-muted">&middot; <?= e($comment['created_at']) ?></span></div>
+        <p class="strat-inline-box-body"><?= e($comment['body']) ?></p>
     </div>
 <?php endforeach; ?>
 
@@ -66,7 +65,7 @@
         <button type="submit">Post comment</button>
     </form>
 <?php elseif ($isLoggedIn): ?>
-    <p style="color:#888;">You don't have permission to comment.</p>
+    <p class="strat-muted">You don't have permission to comment.</p>
 <?php else: ?>
     <p><a href="<?= e(route('/login')) ?>">Log in</a> to comment.</p>
 <?php endif; ?>

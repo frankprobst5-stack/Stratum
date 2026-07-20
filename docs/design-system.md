@@ -154,15 +154,26 @@ treatment is reserved for primary actions like `WelcomeCtaBlock`'s
 `StatsBlock`/`site_stats.summary` already used inline, as a real,
 reusable class other blocks can adopt later.
 
-**`.strat-pill`** (new, content-page pass, not this slice) — will
-replace the `background:#eef1f7;color:#2f6fed;border-radius:12px`
-tag-pill snippet currently copy-pasted inline across `forum/topic.php`,
-`articles/show.php`, `wiki/show.php`, and `tags/index.php`.
+**`.strat-pill`** — status labels (pinned/locked, scan-status), tags,
+type badges. Replaced the `background:#eef1f7;color:#2f6fed;
+border-radius:12px` tag-pill snippet formerly copy-pasted inline across
+`forum/topic.php`, `wiki/show.php`, and `tags/index.php`. `articles/
+show.php` still has its own copy of this pattern — not covered by
+either content-page-pass slice, still open.
 
-**`.strat-inline-box`** (new, content-page pass, not this slice) — will
-replace the `background:#f4f5f7;border-radius:6px` post/comment box
-snippet copy-pasted inline across the same set of files.
+**`.strat-inline-box`** — comments on wiki pages/events/photos.
+Replaced the `background:#f4f5f7;border-radius:6px` snippet formerly
+copy-pasted inline across `wiki/show.php`, `calendar/event.php`, and
+`gallery/photo.php`. Simpler than `.strat-post`: no avatar column, no
+signature/footer — just author/timestamp/body.
 
-The last two are documented here now (so the eventual content-page pass
-has a name and shape to build toward) but not implemented in this slice
-— see `docs/roadmap.md`'s sequencing note.
+**`.strat-photo-grid`** / **`.strat-photo-tile`** (new, second
+content-page slice) — gallery album covers and individual photos.
+Cards in a responsive `auto-fill` grid, not `.strat-list` rows — images
+read better side-by-side than full-width.
+
+**`.strat-chat-window`** / **`.strat-chat-message`** (new, second
+content-page slice) — the chat message log. A scrollable container
+plus a compact author-inline-with-body message shape (distinct from
+`.strat-post`'s avatar-sidebar layout); `/me` action messages get a
+muted-italic look via one `.is-action` modifier class.

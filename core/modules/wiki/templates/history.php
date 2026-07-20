@@ -7,25 +7,18 @@
 <p><a href="<?= e(route('/wiki/' . $page['slug'])) ?>">&larr; <?= e($page['title']) ?></a></p>
 <h1>History: <?= e($page['title']) ?></h1>
 
-<table border="0" cellpadding="6" style="border-collapse:collapse; width:100%;">
-    <thead>
-        <tr style="text-align:left; border-bottom:1px solid #ddd;">
-            <th>When</th>
-            <th>Author</th>
-            <th>Summary</th>
-        </tr>
-    </thead>
-    <tbody>
+<div class="strat-list">
     <?php foreach ($revisions as $revision): ?>
-        <tr style="border-bottom:1px solid #eee;">
-            <td>
-                <a href="<?= e(route('/wiki/' . $page['slug'] . '/history/' . $revision['id'])) ?>">
-                    <?= e($revision['created_at']) ?>
-                </a>
-            </td>
-            <td><?= e($revision['authorName']) ?></td>
-            <td><?= e($revision['comment'] ?? '') ?></td>
-        </tr>
+        <div class="strat-list-row">
+            <div class="strat-list-row-icon" aria-hidden="true">🕓</div>
+            <div class="strat-list-row-main">
+                <div class="strat-list-row-title">
+                    <a href="<?= e(route('/wiki/' . $page['slug'] . '/history/' . $revision['id'])) ?>"><?= e($revision['created_at']) ?></a>
+                </div>
+                <div class="strat-list-row-meta">
+                    by <?= e($revision['authorName']) ?><?php if (!empty($revision['comment'])): ?> &middot; <?= e($revision['comment']) ?><?php endif; ?>
+                </div>
+            </div>
+        </div>
     <?php endforeach; ?>
-    </tbody>
-</table>
+</div>
