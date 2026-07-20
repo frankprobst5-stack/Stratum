@@ -29,9 +29,14 @@ final class MigrationRunner
     /**
      * Applies pending migrations found in $directory, in filename order, for $moduleId.
      *
+     * $only, when given, restricts this run to just those basenames — used
+     * by runAll() to split 'core' into two passes around 'users' (see that
+     * method's docblock for why).
+     *
+     * @param string[]|null $only
      * @return string[] filenames applied
      */
-    public function run(string $moduleId, string $directory): array
+    public function run(string $moduleId, string $directory, ?array $only = null): array
     {
         if (!is_dir($directory)) {
             return [];
@@ -43,6 +48,10 @@ final class MigrationRunner
 
         foreach ($files as $file) {
             $migration = basename($file);
+
+            if ($only !== null && !in_array($migration, $only, true)) {
+                continue;
+            }
 
             if ($this->alreadyRan($moduleId, $migration)) {
                 continue;
@@ -84,12 +93,36 @@ final class MigrationRunner
     }
 
     /**
-     * Runs 'core' migrations, then every discovered module's migrations in
-     * dependency order — 'users' always first (everything else may assume
-     * it exists), then a simple Kahn's-algorithm pass over module.json
-     * `requires` so a module's dependency is always migrated before it is.
-     * The one shared implementation for both `bin/install.php` (CLI) and
-     * the web installer — no parallel ordering logic to drift out of sync.
+     * Three core migrations (member_notes, audit_log, admin_notes) declare a
+     * hard FK to users(id), but core has always run entirely before any
+     * module — including 'users', which is what creates that table. On the
+     * real dev/prod databases this never surfaced: migrations were applied
+     * incrementally over many sessions, and by the time these three were
+     * authored, 'users' already existed from a much earlier install. A
+     * genuinely fresh install — a brand-new club site, or this project's own
+     * first-ever automated test run against a from-scratch database
+     * (2026-07-20) — hits it immediately. Listed explicitly by filename
+     * rather than solved with a generic "core migrations can declare
+     * requires" mechanism, since exactly three files need this and a whole
+     * dependency system for a three-item, rarely-growing list would be
+     * over-engineering; a future core migration that needs 'users' just adds
+     * itself here.
+     */
+    private const CORE_MIGRATIONS_AFTER_USERS = [
+        '006_add_member_notes.php',
+        '010_create_audit_log.php',
+        '011_create_admin_notes.php',
+    ];
+
+    /**
+     * Runs 'core' migrations that don't depend on 'users', then every
+     * discovered module's migrations in dependency order — 'users' always
+     * first (everything else may assume it exists), then a simple
+     * Kahn's-algorithm pass over module.json `requires` so a module's
+     * dependency is always migrated before it is — then the handful of core
+     * migrations deferred above, now that 'users' exists. The one shared
+     * implementation for both `bin/install.php` (CLI) and the web installer —
+     * no parallel ordering logic to drift out of sync.
      *
      * @return array<string, string[]> module_id (with 'core' first) => filenames applied
      */
@@ -97,7 +130,11 @@ final class MigrationRunner
     {
         $this->ensureMigrationsTable();
 
-        $results = ['core' => $this->run('core', $rootDir . '/core/migrations')];
+        $coreDir = $rootDir . '/core/migrations';
+        $coreFiles = array_map('basename', glob($coreDir . '/*.php') ?: []);
+        $coreFirstPass = array_diff($coreFiles, self::CORE_MIGRATIONS_AFTER_USERS);
+
+        $results = ['core' => $this->run('core', $coreDir, $coreFirstPass)];
 
         $modulesDir = $rootDir . '/core/modules';
         $manifests = [];
@@ -134,6 +171,11 @@ final class MigrationRunner
         foreach ($order as $id) {
             $results[$id] = $this->run($id, "{$modulesDir}/{$id}/migrations");
         }
+
+        $results['core'] = array_merge(
+            $results['core'],
+            $this->run('core', $coreDir, self::CORE_MIGRATIONS_AFTER_USERS)
+        );
 
         return $results;
     }

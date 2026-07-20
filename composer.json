@@ -9,10 +9,22 @@
     "autoload": {
         "psr-4": {
             "Stratum\\Core\\": "core/services/",
-            "Stratum\\Admin\\": "core/admin/controllers/"
+            "Stratum\\Admin\\": "core/admin/controllers/",
+            "Stratum\\Api\\": "core/api/controllers/"
         },
         "files": [
             "core/services/helpers.php"
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11"
+    },
+    "scripts": {
+        "test": "phpunit"
     }
 }

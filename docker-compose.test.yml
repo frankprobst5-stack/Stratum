@@ -1,0 +1,14 @@
+services:
+  # Throwaway MySQL for the automated test suite only — never the real
+  # dev/prod database. Port 3307 (not 3306) so it never collides with a
+  # locally-running MySQL. No volume: every `docker compose down` wipes
+  # it clean on purpose, tests always start from a known state.
+  stratum_test_db:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: test_only_not_a_real_secret
+      MYSQL_DATABASE: stratum_test
+    tmpfs:
+      - /var/lib/mysql

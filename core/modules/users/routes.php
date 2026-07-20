@@ -24,6 +24,8 @@ $router->get('/profile', [$profile, 'show']);
 $router->post('/profile', [$profile, 'update']);
 $router->get('/profile/export', [$profile, 'export']);
 $router->post('/profile/delete', [$profile, 'delete']);
+$router->post('/profile/api-tokens', [$profile, 'createToken']);
+$router->post('/profile/api-tokens/{id}/revoke', [$profile, 'revokeToken']);
 
 $friends = new FriendsController($app);
 $router->get('/friends', [$friends, 'index']);

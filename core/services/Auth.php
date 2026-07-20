@@ -13,11 +13,20 @@ final class Auth
     private ?array $user = null;
     private bool $resolved = false;
 
+    /**
+     * $request/$apiTokens are nullable — bin/cron.php builds an Auth with
+     * no real HTTP request at all (deliberately, per its own docblock:
+     * "minus the HTTP-specific pieces"), so Bearer-token resolution just
+     * never applies there rather than forcing a fake Request into a
+     * context that has none.
+     */
     public function __construct(
         private readonly Session $session,
         private readonly Database $db,
         private readonly AuthServiceInterface $identity,
-        private readonly PermissionEngine $permissions
+        private readonly PermissionEngine $permissions,
+        private readonly ?Request $request = null,
+        private readonly ?ApiTokenService $apiTokens = null
     ) {
     }
 
@@ -66,7 +75,16 @@ final class Auth
         return $this->permissions->userCan((int) $user['id'], $capabilityKey, $scopeType, $scopeId);
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Resolves the current user from a session first — a Bearer API
+     * token only ever applies when there's no session at all, so a
+     * browser's own logged-in session always takes precedence over any
+     * stray Authorization header. Every capability check downstream
+     * (`can()`) is identical either way, since both paths converge on the
+     * same $this->user array.
+     *
+     * @return array<string, mixed>|null
+     */
     public function user(): ?array
     {
         if ($this->resolved) {
@@ -75,13 +93,37 @@ final class Auth
 
         $this->resolved = true;
         $id = $this->session->get('user_id');
-        if ($id === null) {
+        if ($id !== null) {
+            $this->user = $this->identity->findById((int) $id);
+
+            return $this->user;
+        }
+
+        $this->user = $this->userFromBearerToken();
+
+        return $this->user;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function userFromBearerToken(): ?array
+    {
+        if ($this->request === null || $this->apiTokens === null) {
             return null;
         }
 
-        $this->user = $this->identity->findById((int) $id);
+        $header = $this->request->server('HTTP_AUTHORIZATION') ?? '';
+        if (!str_starts_with($header, 'Bearer ')) {
+            return null;
+        }
 
-        return $this->user;
+        $rawToken = trim(substr($header, 7));
+        if ($rawToken === '') {
+            return null;
+        }
+
+        $userId = $this->apiTokens->resolveUserIdFromToken($rawToken);
+
+        return $userId !== null ? $this->identity->findById($userId) : null;
     }
 
     private function tooManyAttempts(string $identifier, string $ip): bool

@@ -1,5 +1,7 @@
 /vendor/
 /.env
+/.env.testing
+/.phpunit.result.cache
 
 # Local dev tooling config — .claude/settings.local.json was found to
 # contain a real MySQL password embedded in a permission-allowlist entry

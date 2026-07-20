@@ -5,6 +5,8 @@
  * @var string $csrfToken
  * @var bool $saved
  * @var ?string $deleteError
+ * @var array<int, array<string, mixed>> $apiTokens newest first, active and revoked
+ * @var ?string $newToken the raw value of a just-created token — shown exactly once
  */
 ?>
 <h1>My Profile</h1>
@@ -64,6 +66,58 @@
 
 <h2>Your data</h2>
 <p><a href="<?= e(route('/profile/export')) ?>">Download a copy of your data</a> — your account fields plus a list of content you've created.</p>
+
+<hr>
+
+<h2>API tokens</h2>
+<p class="strat-muted">Personal access tokens for scripts and integrations — see <a href="<?= e(route('/api-docs')) ?>">API documentation</a>.</p>
+
+<?php if ($newToken !== null): ?>
+    <div class="strat-inline-box" style="border-color:var(--strat-color-green);">
+        <strong>Your new token — copy it now, it won't be shown again:</strong>
+        <p class="strat-inline-box-body" style="font-family:monospace; word-break:break-all; user-select:all;"><?= e($newToken) ?></p>
+    </div>
+<?php endif; ?>
+
+<?php if ($apiTokens !== []): ?>
+    <div class="strat-list">
+        <?php foreach ($apiTokens as $token): ?>
+            <div class="strat-list-row">
+                <div class="strat-list-row-main">
+                    <div class="strat-list-row-title">
+                        <?= e($token['name']) ?>
+                        <?php if ($token['revoked_at'] !== null): ?>
+                            <span class="strat-pill" data-tone="neutral">Revoked</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="strat-list-row-meta">
+                        created <?= e($token['created_at']) ?>
+                        <?php if ($token['last_used_at'] !== null): ?>
+                            &middot; last used <?= e($token['last_used_at']) ?>
+                        <?php else: ?>
+                            &middot; never used
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php if ($token['revoked_at'] === null): ?>
+                    <form method="post" action="<?= e(route('/profile/api-tokens/' . $token['id'] . '/revoke')) ?>" onsubmit="return confirm('Revoke this token? Anything using it will stop working immediately.');">
+                        <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+                        <button type="submit">Revoke</button>
+                    </form>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+<form method="post" action="<?= e(route('/profile/api-tokens')) ?>" style="max-width:28rem;">
+    <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+    <p>
+        <label for="token_name">New token name</label><br>
+        <input type="text" id="token_name" name="name" required placeholder="e.g. Zapier, my script" style="width:100%;">
+    </p>
+    <button type="submit">Create token</button>
+</form>
 
 <details>
     <summary style="cursor:pointer; color:#b00020;">Delete my account</summary>

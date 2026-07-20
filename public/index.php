@@ -23,6 +23,7 @@ if (PHP_SAPI === 'cli-server') {
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+use Stratum\Core\ApiTokenService;
 use Stratum\Core\App;
 use Stratum\Core\Auth;
 use Stratum\Core\BlockRegistry;
@@ -110,10 +111,12 @@ try {
 // a no-op the second time.
 $permissions = new PermissionEngine($db);
 
-require_once $rootDir . '/core/modules/users/services/AuthService.php';
-$auth = new Auth($session, $db, new AuthService($db), $permissions);
-
+// Built before Auth (Stage 10) so Auth can resolve a Bearer API token
+// from it when there's no session — see Auth::userFromBearerToken().
 $request = Request::fromGlobals();
+
+require_once $rootDir . '/core/modules/users/services/AuthService.php';
+$auth = new Auth($session, $db, new AuthService($db), $permissions, $request, new ApiTokenService($db));
 
 // Full-page cache — checked here, before ModuleManager::boot(), so a
 // hit skips essentially the entire request pipeline (module loading,
@@ -168,6 +171,14 @@ if ($modules->isEnabled('presence') && session_id() !== '' && session_id() !== f
     $router = $app->router;
     require $routesFile;
 })($rootDir . '/core/admin/routes.php', $app);
+
+// The REST API (Stage 10) spans every module's own service layer, so it
+// isn't one module's concern either — same reasoning as the admin panel
+// above, same loading pattern.
+(static function (string $routesFile, App $app): void {
+    $router = $app->router;
+    require $routesFile;
+})($rootDir . '/core/api/routes.php', $app);
 
 /**
  * Front page, block-composed (Stage 8, 2026-07-18) — replaces the

@@ -6647,7 +6647,7 @@ this verified cleanly here). Most cheap shared hosts default to free
 HTTPS today, but this hasn't been verified per-club and isn't a
 guarantee.
 
-## Stage 10 — Platform Hardening & API
+## Stage 10 — Platform Hardening & API (started 2026-07-20)
 
 **Deliverables**: REST API surface over the existing service layer, optional
 GraphQL, automated test suite consolidation, CI/CD, container-friendly
@@ -6658,14 +6658,232 @@ something already built.)
 **Usable outcome**: Stratum is deployable via container/CI pipeline and has a
 documented public API for future integrations/mobile apps.
 
-**Added to scope 2026-07-19**: a real end-user manual — "how to use this
-site" content covering members' actual features (forum, wiki, calendar,
-chat, messages, downloads, the shop, the newsletter addon if installed),
-plus one link/card in the admin dashboard pointing to it. Recommended
-approach: reuse the existing `pages` module (`core/modules/pages/`,
-already gives admins a real editable, sanitized content page) rather than
-building a new module for this — one comprehensive page is the right v1,
-split into multiple only if it actually gets unwieldy once written.
+**Considered 2026-07-19, decided against 2026-07-20**: a real end-user
+manual page + admin dashboard link. User's call — not needed.
+
+## Stage 10, First Slice: REST API Foundation ✅ (SHIPPED 2026-07-20)
+
+**Why**: Stage 10's own deliverable ("a REST API surface over the
+existing service layer... a documented public API") is a large,
+open-ended target — every module has its own service layer, and no other
+Stage in this project has ever attempted exhaustive coverage in one
+pass. This slice builds the real, reusable **foundation** — token
+authentication, versioning, a consistent JSON envelope — and proves it
+end-to-end against a genuinely useful first set of resources (articles,
+forum, calendar events, all reads, plus one real write endpoint). Every
+future resource follows the exact pattern established here.
+
+**Authentication: personal API tokens, extending `Auth` itself rather
+than building a parallel auth system.** `Auth::user()`
+(`core/services/Auth.php`) now falls back to resolving a `Bearer` token
+from the `Authorization` header whenever there's no session — meaning
+every API controller reuses `$app->auth->can('forum.reply')` exactly
+like web controllers already do, with **zero duplicated permission
+logic**. `$request`/`$apiTokens` are nullable constructor params
+specifically so `bin/cron.php` (which deliberately builds an `Auth` with
+no real HTTP request at all) needed no changes. New `ApiTokenService`
+(`core/services/ApiTokenService.php`) generates a `strat_`-prefixed
+64-hex-char token, stores only its SHA-256 hash, and reveals the raw
+value exactly once.
+
+**A real architectural correction made mid-build, not just planned
+around**: the migration creating `api_tokens` was originally slated for
+`core/migrations/`, but `MigrationRunner::runAll()` runs core migrations
+*before* any module (including `users`) — a core-level FK to `users(id)`
+would fail on a genuinely fresh install. Moved to
+`core/modules/users/migrations/007_create_api_tokens.php` instead, which
+both sidesteps the ordering hazard entirely and is a better fit
+architecturally (a token is a user's own credential, not site-wide
+config).
+
+**A real CSRF vulnerability caught and removed before it shipped**: the
+plan's own endpoint list included `POST /api/v1/tokens` for
+session-authenticated token creation (a "bootstrapping" endpoint, since
+you can't present a Bearer token to get your first one). Partway through
+writing it, realized this was a real mistake — a session-cookie-authed
+POST endpoint with no CSRF check is exactly the shape of a CSRF
+vulnerability (any site could silently POST to it using a logged-in
+victim's ambient session cookie and mint them a token without their
+knowledge). The web profile page's own token-creation form
+(`POST /profile/api-tokens`, real CSRF, already built) is the correct
+and sufficient bootstrap path — deleted `TokensApiController` entirely
+rather than bolt on a special-case CSRF exception to one `/api/v1/`
+route.
+
+**Token management UI**: a new section on the existing `/profile` page
+(`core/modules/users/controllers/ProfileController.php` +
+`templates/profile.php`) — list active/revoked tokens, a create form,
+one-time reveal via a session-flash value (`set()`/`remove()` on the
+existing `Session` class, no new mechanism), and a revoke button per
+token, using the design-system components (`.strat-list`, `.strat-pill`)
+established across last night's content-page pass.
+
+**API surface** (`core/api/`, parallel to `core/admin/` — core
+infrastructure spanning every module, not one module's concern, same
+reasoning `core/admin/` already established; new
+`Stratum\Api\` → `core/api/controllers/` PSR-4 mapping in
+`composer.json`): `ApiController` (base class mirroring
+`AdminController`'s `guard()` shape, JSON instead of redirects),
+`ApiResponse` (`data()`/`paginated()`/`error()` — fixed shaping on top of
+the existing `Response::json()`, not a new response mechanism). CSRF is
+deliberately skipped on every real `/api/v1/` route (all Bearer-authed —
+no ambient browser credential to forge with, standard REST practice),
+now that the one session-authed exception above no longer exists.
+
+**Endpoints, this slice**: `GET /api/v1/articles` (+ `/{slug}`),
+`GET /api/v1/forum/boards`, `GET /api/v1/forum/boards/{slug}/topics`,
+`GET /api/v1/forum/topics/{id}`, `POST /api/v1/forum/topics/{id}/reply`
+(the one write endpoint — deliberately mirrors
+`ForumController::reply()`'s exact capability/locked-topic/notify()
+logic), `GET /api/v1/calendar/events` (+ `/{id}`). Every `GET` action is
+a thin wrapper calling each module's existing, completely unchanged
+service method (`ForumService::listBoards()` etc.) — no new query logic
+anywhere. A real `/api-docs` page
+(`core/modules/api/templates/docs.php` — deliberately under
+`core/modules/api/`, not `core/api/`, purely because
+`TemplateEngine::resolve()` only special-cases `'admin'` outside
+`core/modules/{id}/templates/`; `api` was never meant to be a real
+ModuleManager-registered module) lists every endpoint and the auth
+header format.
+
+**Verification, all live, nothing assumed**: `php -l` sweep clean
+throughout (including the mid-build course corrections above).
+Confirmed reads work with zero auth, matching the web's own public
+access model. Created a real token through the actual `/profile` page
+in the real browser — confirmed the raw value is shown exactly once
+(gone on refresh) and the stored row only ever has a SHA-256 hash
+(independently recomputed and matched by hand). Used that real token:
+confirmed `POST .../reply` 401s with no token and with a garbage token,
+then succeeded with the real one — the reply genuinely appeared on the
+real `/forum/topics/{id}` web page afterward, proving it went through
+`ForumService` for real rather than a parallel code path. Revoked the
+token through the real endpoint and confirmed it stopped working
+immediately (401). Confirmed `?page=`/`?per_page=` on `/api/v1/articles`
+returned the correct slice and correct `meta.total`. All test
+tokens/replies deleted afterward, confirmed via follow-up queries — and
+confirmed `forum_posts`' count fields are live subqueries
+(`ForumService::listBoards()`), not denormalized counters, so no stale
+counts were left behind by the delete either. `composer dump-autoload`
+run for the new PSR-4 mapping. Dev server stopped clean.
+
+**Deliberately not built in this slice**: every other module's own
+endpoints (wiki, downloads, gallery, chat, messages, commerce, dues,
+donations...) — same "verify in slices" discipline as every other Stage,
+now with a proven pattern every future resource just repeats. Rate
+limiting (429 is reserved in `ApiResponse`'s error codes but nothing
+enforces it yet). GraphQL, automated test suite consolidation, CI/CD,
+container deployment, and the security audit all remain open Stage 10
+items.
+
+---
+
+## Stage 10, Second Slice: Automated Test Suite Foundation ✅ (SHIPPED 2026-07-20)
+
+**Why**: this project had zero automated tests across ~30 modules built
+over Stages 1–10 — every one verified the same way, live curl/browser
+checks by hand, every time. Disciplined, but it's not a regression net,
+and it's an explicit Stage 10 deliverable ("automated test suite
+consolidation"). This slice builds the real, reusable **foundation**, not
+exhaustive coverage — the framework layer everything else depends on
+(`Auth`, `PermissionEngine`) plus the REST API built in the First Slice
+above, the cleanest possible target to prove the pattern against.
+
+**Real MySQL, not a fake DB**: this codebase's migrations are too
+MySQL-specific (`ENGINE=InnoDB`, real `FOREIGN KEY`s, `NOW()`) for SQLite
+to stand in. Two already-known constraints ruled out the two easiest
+shortcuts — the `stratum` MySQL user has no `CREATE DATABASE` privilege,
+and a same-database-different-prefix trick isn't actually isolated (this
+project's migrations use hardcoded, non-prefixed FK constraint names,
+which collide across prefixes in the same physical database). Resolution:
+a throwaway `mysql:8.0` container (`docker-compose.test.yml`), port 3307
+so it never collides with the real dev MySQL on 3306, no volume (every
+`docker compose down` wipes it clean on purpose), started once and left
+running for fast local iteration. `.env.testing` (gitignored, alongside
+`.env`) points at it; `.env.testing.example` is committed the same way
+`.env.example` already is.
+
+**A real, previously-undiscovered production bug caught and fixed**:
+booting the suite against a genuinely fresh database (the first time this
+project's migrations had ever run start-to-finish in one shot, rather
+than incrementally across many sessions) immediately crashed —
+`core/migrations/006_add_member_notes.php` has a hard FK to `users(id)`,
+but `MigrationRunner::runAll()` has always run every `core/migrations/`
+file before any module's migrations, including `users` (the module that
+creates that table). On the real dev database this never surfaced: by
+the time migration 006 was written, `users` already existed from a much
+earlier install. Any brand-new install — one of the 8 real club sites
+this project is meant to replace, or this project's own first-ever
+from-scratch test run — would have hit this immediately. Three core
+migrations turned out to have the same FK (006, 010, 011). Fixed in
+`core/services/MigrationRunner.php`: `run()` gained an optional `$only`
+filter, and `runAll()` now runs 'core' in two passes — everything except
+those three files, then every module (users first, as always), then the
+three deferred files, now that `users` exists. Confirmed harmless against
+the real dev database (everything already applied, so both passes are
+no-ops there) and confirmed it fixes a truly fresh install (this is
+exactly what unblocked the test suite in the first place).
+
+**Infrastructure** (`tests/`): `tests/bootstrap.php` — a small parallel
+to `core/bootstrap.php` pointed at `.env.testing` instead of `.env`, plus
+running `MigrationRunner::runAll()` (idempotent — safe against an
+already-migrated container on every run). `tests/Support/TestEnvironment.php`
+— one `Config`/`Database` per test *process*, shared by every test rather
+than reconnecting per test. `tests/TestCase.php` — builds a real `App`
+per test (identical wiring to `public/index.php`, minus the
+HTTP-response-only pieces no test needs), plus: `createUser()` (a real
+row via `AuthService`, then looks up and assigns the `'member'` role —
+the same two-step pattern `MembershipApplicationService::approve()` uses
+for real signups, so test users start with the same baseline as a real
+approved member); `grantCapability()` (an ad hoc role + grant, for tests
+needing one specific permission without pulling in everything `member`
+implies — note that even real `member` accounts get **zero** capabilities
+by default, see `core/migrations/002_create_permission_tables.php`, so
+this isn't a shortcut, it's the actual admin-grants-permissions model);
+`asUser()` (a fresh `App` whose `Auth` already resolves a user via a real
+`Session::set('user_id', ...)`, the same end state a real login leaves,
+without needing real credentials); `makeRequest()` (stages `$_GET`/
+`$_POST`/`$_SERVER` temporarily since `Request::fromGlobals()` is the only
+public factory, restores them after); and a `tearDown()` cleaning up
+whatever each test created. `composer.json` gained `autoload-dev`
+(`Tests\\` → `tests/`) and `require-dev: phpunit/phpunit: ^11`;
+`phpunit.xml` points at `tests/` with `tests/bootstrap.php` as bootstrap.
+
+**Tests, this slice** (24 tests, 39 assertions): `tests/Core/AuthTest.php`
+— login success/failure, lockout after `MAX_ATTEMPTS` (10) within the
+15-minute window, `can()` false for guest and true only after a grant
+(confirmed `PermissionEngine::userCan()` has no caching layer — a grant
+takes effect on the same `Auth` instance immediately), Bearer token
+resolve/invalid/revoked. `tests/Api/ArticlesApiTest.php` — published-only
+listing, pagination math, 404 on a draft's slug and on an unknown slug.
+`tests/Api/ForumApiTest.php` — the full `reply()` guard chain (401 no
+auth, 403 no capability, 201 with it, 403 on a locked topic even with the
+capability, 422 on an empty body) plus board/topic reads. Article/board/
+topic/event fixtures are created directly through each module's own real
+service (`ArticleService::create()`, `ForumService::createBoard()`, etc.)
+— never a mock — and cleaned up per-test. `tests/Api/CalendarApiTest.php`
+— upcoming-vs-past filtering (had to fix a first draft: the service's
+"upcoming" cutoff is `now - 1 day`, deliberately generous so a
+same-day-already-started event still counts as upcoming — a "-1 day"
+fixture landed right on that boundary and flaked; moved to "-3 days").
+
+**Verification**: `composer test` — 24/24 green against the throwaway
+container. Proved the suite actually catches a regression, not just
+passes trivially: flipped `Auth::check()`'s `!== null` to `=== null`,
+reran — 10 of 24 tests failed immediately, spanning both the `Auth` layer
+directly and every API guard that depends on it (`ForumApiTest`'s whole
+guard chain inverted: 401↔403↔201 all wrong) — then reverted and
+confirmed 24/24 green again. `php -l` clean across every new/changed
+file. Confirmed the `MigrationRunner` fix is a no-op against the real
+dev database (`bin/install.php` — every migration already applied, both
+core passes report "already up to date").
+
+**Deliberately not built in this slice**: tests for the other ~28
+modules — wiki, downloads, gallery, chat, messages, commerce, dues,
+donations, and everything else — same "prove the pattern first, extend
+it later" discipline as the REST API slice above. No CI wiring (the
+suite runs locally against the Docker container; hooking it into a CI
+pipeline is a separate, still-open Stage 10 item). No coverage
+measurement/enforcement.
 
 ---
 

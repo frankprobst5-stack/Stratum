@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Stratum\Modules\Users;
 
 use Stratum\Core\AccountExportService;
+use Stratum\Core\ApiTokenService;
 use Stratum\Core\App;
 use Stratum\Core\Request;
 use Stratum\Core\Response;
@@ -24,15 +25,62 @@ final class ProfileController
         $user = $this->app->auth->user();
         $authService = new AuthService($this->app->db);
 
+        // One-time reveal: a freshly-created token's raw value is flashed
+        // into the session by createToken() below, read here, then
+        // immediately cleared — so it survives exactly one page load
+        // (this one) and can never be retrieved again, even by refreshing.
+        $newToken = $this->app->session->get('flash_new_api_token');
+        $this->app->session->remove('flash_new_api_token');
+
         $content = $this->app->templates->render('users', 'profile', [
             'user' => $user,
             'rankName' => $authService->rankName($user['rank_id'] !== null ? (int) $user['rank_id'] : null),
             'csrfToken' => $this->app->session->csrfToken(),
             'saved' => $request->query('saved') === '1',
             'deleteError' => $request->query('delete_error'),
+            'apiTokens' => (new ApiTokenService($this->app->db))->listForUser((int) $user['id']),
+            'newToken' => $newToken,
         ]);
 
         return Response::html($this->app->renderPage($content, $request));
+    }
+
+    public function createToken(Request $request): Response
+    {
+        if (!$this->app->auth->check()) {
+            return Response::redirect('/login');
+        }
+
+        if (!$this->app->session->verifyCsrf($request->input('_csrf'))) {
+            return Response::html('Invalid request.', 400);
+        }
+
+        $name = trim((string) $request->input('name', ''));
+        if ($name === '') {
+            return Response::redirect('/profile');
+        }
+
+        $user = $this->app->auth->user();
+        $result = (new ApiTokenService($this->app->db))->createToken((int) $user['id'], $name);
+        $this->app->session->set('flash_new_api_token', $result['token']);
+
+        return Response::redirect('/profile');
+    }
+
+    public function revokeToken(Request $request): Response
+    {
+        if (!$this->app->auth->check()) {
+            return Response::redirect('/login');
+        }
+
+        if (!$this->app->session->verifyCsrf($request->input('_csrf'))) {
+            return Response::html('Invalid request.', 400);
+        }
+
+        $user = $this->app->auth->user();
+        (new ApiTokenService($this->app->db))->revoke((int) $request->param('id', '0'), (int) $user['id']);
+
+        return Response::redirect('/profile');
     }
 
     /** A JSON download of the member's own account fields plus a manifest of content they've authored — see AccountExportService. */
