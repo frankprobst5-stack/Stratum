@@ -14,9 +14,9 @@
 <h1>API Documentation</h1>
 
 <p class="strat-muted">
-    Stage 10's first slice — a real, working foundation proven against a
-    useful first set of resources, not exhaustive coverage of every
-    module yet. More endpoints follow the same pattern established here.
+    Built in slices, proven against real resources before growing further
+    — not exhaustive coverage of every module yet. More endpoints follow
+    the same pattern established here.
 </p>
 
 <h2>Authentication</h2>
@@ -43,6 +43,12 @@
         ['POST', '/api/v1/forum/topics/{id}/reply', 'Post a reply — requires a Bearer token'],
         ['GET', '/api/v1/calendar/events', 'Upcoming events (paginated)'],
         ['GET', '/api/v1/calendar/events/{id}', 'One event'],
+        ['GET', '/api/v1/wiki', 'List wiki pages (paginated)'],
+        ['GET', '/api/v1/wiki/{slug}', 'One wiki page, with its current body'],
+        ['GET', '/api/v1/downloads', 'List downloadable files (paginated)'],
+        ['GET', '/api/v1/downloads/{id}', 'One file, with its current version and mirrors'],
+        ['GET', '/api/v1/gallery/albums', 'List gallery albums (paginated)'],
+        ['GET', '/api/v1/gallery/albums/{id}/photos', 'One album and its photos'],
     ];
     ?>
     <?php foreach ($endpoints as [$method, $path, $desc]): ?>

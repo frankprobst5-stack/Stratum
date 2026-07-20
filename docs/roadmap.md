@@ -6887,6 +6887,67 @@ measurement/enforcement.
 
 ---
 
+## Stage 10, Third Slice: API Coverage for Wiki/Downloads/Gallery ✅ (SHIPPED 2026-07-20)
+
+**Why**: the First Slice proved the REST API pattern (Bearer auth, JSON
+envelope, pagination) against articles/forum/calendar; the Second Slice
+proved a real test suite against that same code. This slice extends both
+at once to the next tier of read-heavy modules — new endpoints written
+with their tests alongside them from the start, not bolted on after.
+
+**Six new read endpoints**, same shape as the First Slice's (`ApiController`
+base, `ApiResponse` envelope, `paginationParams()`), each a thin wrapper
+over the existing, unchanged service layer: `GET /api/v1/wiki` (+
+`/{slug}`, includes the page's current revision body inline since a wiki
+page with no body is useless over an API), `GET /api/v1/downloads` (+
+`/{id}`, includes `currentVersion` and `mirrors`), `GET
+/api/v1/gallery/albums` (+ `/{id}/photos`, an album with its full photo
+list — mirrors `ForumApiController`'s boards()/topics() shape, since
+gallery albums have no slug, only an id). All three modules' web
+controllers already treat reads as fully public (no capability check),
+so these needed no `guard()` call either — same access model straight
+through. No new write endpoint this slice; `ForumApiController::reply()`
+already proved that shape, and none of these three had an obviously
+analogous single write action worth the added surface yet.
+
+`DownloadService::listRecent()`/`GalleryService::listAlbums()` don't take
+an unbounded "give me everything" mode the way `ArticleService::listPublished()`
+does — `listRecent()` takes a hard SQL `LIMIT`. Passed a large ceiling
+(100000) and reused the same in-PHP `array_slice()` pagination every
+other index() action already does, rather than inventing a second
+pagination strategy for two endpoints.
+
+**Tests written alongside, not after**: `WikiApiTest`, `DownloadsApiTest`,
+`GalleryApiTest` (9 tests, 19 assertions) — index listing, show/photos
+with real related data, 404s. `DownloadService::createFile()` and
+`GalleryService::createAlbum()`/`addPhotos()` both call
+`move_uploaded_file()` against a real `$_FILES` tmp path, which only ever
+succeeds inside a genuine HTTP upload request — always fails silently
+(`is_uploaded_file()` returns false) in a CLI test process. Fixtures for
+these two modules are inserted directly into `downloads_files`/
+`downloads_versions` and `gallery_albums`/`gallery_photos` instead,
+bypassing the service's upload-handling entirely — the read endpoints
+under test never call those methods anyway, so this doesn't weaken what's
+being verified.
+
+**Verification**: `composer test` — 33/33 green (24 prior + 9 new).
+`php -l` clean across every new file. Started the real dev server and
+curled all six endpoints against real production data seeded by prior
+sessions (real wiki pages, a real download with version history, a real
+photo album) — correct JSON shape, correct 404s for unknown slugs/ids on
+all three. `/api-docs` updated with the six new rows. Dev server stopped
+clean afterward.
+
+**Deliberately not built in this slice**: endpoints for the remaining
+modules (chat, messages, commerce, dues, donations, tags, activity,
+bookmarks, comments, ratings...) — same slice-by-slice discipline.
+Upload endpoints for downloads/gallery (would need real multipart
+handling through the API, a meaningfully bigger scope than a read
+wrapper). Rate limiting, GraphQL, CI/CD, container deployment, and the
+security audit all remain open Stage 10 items.
+
+---
+
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
 required now" per the original vision notes).
 
