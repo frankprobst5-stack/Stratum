@@ -5398,8 +5398,8 @@ Fifth Slice: Top Nav Redesign" above: icon-based primary nav + a "More"
 overflow dropdown (fixing a real 21-item flat-list problem, not just a
 cosmetic pass), a new `topbar_actions` block region, search/notifications
 restyled to match, a user profile dropdown, and a `messages` module
-placeholder reserving the header spot for real private messaging (still
-Stage 9, deliberately deferred). **Sixth slice shipped same day** — see
+placeholder reserving the header spot for real private messaging (built
+out for real 2026-07-19 — see "Private Messaging" below). **Sixth slice shipped same day** — see
 "Stage 8, Sixth Slice: WordPress-Style Block Management" above: real
 per-block settings forms (`ConfigurableBlock`/`BlockConfigForm`) replacing
 raw JSON, and genuine drag-and-drop placement from a palette into
@@ -5644,7 +5644,7 @@ blockers.
 **Usable outcome**: an admin reskins the site and rearranges layout without
 touching code.
 
-## Stage 9 — Realtime & Modern Extras (in progress, started 2026-07-19)
+## Stage 9 — Realtime & Modern Extras ✅ (SHIPPED 2026-07-19 — chat, private messaging, live notifications, and PWA support all closed out in one session)
 
 **Deliverables**: chatroom (the one stage with no direct e107/SMF/ocPortal
 analog, see `architecture.md` — design settled 2026-07-18, full notes
@@ -5655,12 +5655,14 @@ always-public and self-deleting when empty), AJAX-polling messaging,
 Rooms" block — deliberately simplified from the original 2026-07-18
 design notes (no operators/bans/reactions/uploads/Markdown/SSE-WebSocket
 transport in this pass, see that entry's full "deliberately not built"
-list). Still open: live notifications, PWA support, private messaging
-(member-to-member,
-referenced as "Stage 9, unbuilt" back in Stage 6c's classifieds writeup but
-never actually added to this deliverable list until this audit pass — same
-gap, now closed; **deliberately decoupled from the chatroom build**, see
-below, not a shared data model). **A `messages` module already exists as
+list). Live notifications ✅ and PWA support ✅ — both SHIPPED 2026-07-19,
+see "Live Notifications" and "PWA Support" below. Private messaging
+(member-to-member — referenced as "Stage 9, unbuilt" back in Stage 6c's
+classifieds writeup but never actually added to this deliverable list
+until this audit pass — same gap, now closed; **deliberately decoupled
+from the chatroom build**, see below, not a shared data model) ✅ SHIPPED
+2026-07-19 — see "Private Messaging" below. **A `messages` module already
+existed as
 of 2026-07-18's top-nav redesign** (see "Stage 8, Fifth Slice" above) —
 `messages.icon` block in the new `topbar_actions` region and a `GET
 /messages` placeholder route/template, both intentionally minimal (no
@@ -5931,8 +5933,9 @@ roles, bans, message reactions, file uploads, Markdown formatting, word
 filters, an admin dashboard stats panel, typing indicators, SSE/
 WebSocket transport upgrades, content-attached chat (article/download/
 gallery/event chat rooms), and a dedicated club-chat room per
-org_spaces. Private messaging (member-to-member DMs) remains its own
-separate, not-yet-built Stage 9 deliverable, per the original design
+org_spaces. Private messaging (member-to-member DMs) was tracked as its
+own separate Stage 9 deliverable ✅ SHIPPED 2026-07-19, see "Private
+Messaging" below — per the original design
 notes' explicit "decoupled from chat rooms" decision — unaffected by
 this slice.
 
@@ -6427,6 +6430,223 @@ issues/pages/placements deleted afterward — issue deletion's `ON DELETE
 CASCADE` confirmed via a follow-up query showing zero rows in both
 tables. Dev server stopped clean.
 
+## Private Messaging ✅ (SHIPPED 2026-07-19)
+
+**Why**: the last real user-facing feature gap in Stage 9. Tracked as its
+own deliverable since 2026-07-18, deliberately decoupled from chat rooms
+(a DM is a two-party thread, a different data shape from a multi-user
+channel) and explicitly deferred until chat shipped first — chat shipped
+earlier the same day this was built. The `messages` module has existed
+since the Stage 8 top-nav redesign purely as a placeholder (an icon
+always showing 0, a "coming soon" page) reserving the header spot; this
+slice replaces both with the real feature.
+
+**Scope, deliberately bounded**: a normal, page-load-based inbox —
+compose, reply, unread badge — not a live/AJAX-polling chat window. Live
+notifications and PWA push remain separate, still-open Stage 9 items; a
+DM inbox is checked periodically like email, not watched live like a chat
+room, so no polling transport was built here.
+
+**Schema**: `message_conversations` (`user_one_id`/`user_two_id`, always
+stored in canonical smaller-id-first order, `UNIQUE(user_one_id,
+user_two_id)`) and `direct_messages` (`conversation_id`, `sender_id`,
+`body`, `read_at`). Strictly two-party by design, per the original
+decoupling decision — no group-thread capability, no junction table
+needed. `read_at` is deliberately per-message and DM-specific, not a
+reuse of the generic `notifications` table's read state — reusing that
+would have conflated DM-unread with every other notification type in the
+same badge count.
+
+**`MessagesService`** (`core/modules/messages/services/MessagesService.php`)
+— `findOrCreateConversation()` (idempotent, canonicalizes user-id order so
+the same pair can never get two conversation rows regardless of who
+messages whom first), `sendMessage()`, `listConversationsForUser()`
+(joined with the other participant's username and a per-conversation
+unread count), `listMessagesInConversation()`, `markConversationRead()`,
+`unreadCount()` (powers the header badge), `isParticipant()` (the
+access-control check every controller action runs before letting anyone
+view or post — never trust the URL alone, same discipline chat's private-
+room membership check already established).
+
+**A real bug caught live, not by lint**: `sendMessage()`'s conversation-
+touch update originally wrote `SET last_message_at = :now, updated_at =
+:now` — the same named placeholder twice in one query, bound once. Ran
+fine everywhere else tonight by coincidence (this codebase's own
+`FriendService` had already independently hit and solved this exact class
+of bug with suffixed placeholder names — `:user_id1`/`:user_id2`/etc —
+which this file's *other* multi-reference-to-the-same-value queries had
+correctly followed; this one update was the one spot that got missed).
+Surfaced as a real `PDOException: SQLSTATE[HY093]: Invalid parameter
+number` 500 on the very first live reply attempt — `php -l` can't catch a
+malformed parameterized query, only a live request against a real prepared
+statement can, the same lesson this project has hit before (`forum_posts`'
+`author_id` column name, earlier tonight). Fixed by using distinct
+placeholder names for every repeated value. Caught a second-order effect
+of the same bug too: the message `INSERT` and the conversation `UPDATE`
+aren't wrapped in a transaction (this codebase doesn't use transactions
+anywhere — not a new gap introduced here), so the two requests made while
+the bug was live had already partially written a message row despite the
+overall request 500ing; both were found and removed during test-data
+cleanup, confirmed via a direct row-count query, not just assumed gone.
+
+**Real `MessagesIconBlock`** replaces the placeholder — identical badge
+pattern to `NotificationBellBlock`
+(`core/modules/notifications/services/NotificationBellBlock.php`), just
+backed by `MessagesService::unreadCount()` instead. Also fires a real
+`$app->notify()` event on every new message — exactly what the original
+2026-07-18 design notes specified ("PMs reuse the same notification hooks
+... not a new alerting path"), giving a DM visibility in the general
+notification feed independent of the envelope badge, the same
+dual-signal pattern donations/commerce/chat invites already use.
+
+**Verification**: full `php -l` sweep clean (after the fix above). Live
+via curl as three real accounts. `modtest_member` messaged
+`modtest_admin` by username twice in a row — confirmed only one
+conversation row ever existed (`findOrCreateConversation`'s idempotency
+holding under a real repeat), both messages landed in it. `modtest_admin`
+replied; confirmed strict chronological ordering in the thread.
+Confirmed the header badge accurately showed a real unread count before
+a fresh reply was viewed and correctly dropped to zero immediately after
+— tested with a purpose-built fresh message rather than trusting an
+earlier already-viewed one, since opening a conversation during earlier
+verification steps had already marked prior messages read. `modtest_outsider`
+(never a participant) got a real 403 fetching the conversation directly
+by id. Confirmed a message to a nonexistent username 422s with a clear
+error, not a fatal. Confirmed the notification actually appears at
+`/notifications`. All test conversations/messages/notifications deleted
+afterward, confirmed via a follow-up zero-row query across all three
+tables. Dev server stopped clean.
+
+## Live Notifications ✅ (SHIPPED 2026-07-19)
+
+**Why**: the second-to-last open item in Stage 9. Scope confirmed with
+the user up front, since there was a real architectural fork: real
+OS-level Web Push (a new Composer dependency, VAPID keys, an HTTPS
+requirement) vs. in-app live updates (polling, no new dependencies).
+Chose the latter — real push was explicitly out of scope for this pass,
+matching the same reasoning chat's own transport-tier decision already
+established ("no chat-owned push notifications — push delivery is
+genuinely PWA-stage infrastructure," from the 2026-07-18 design notes).
+
+**The key reuse, not a new mechanism**: `layout.php`'s dropdown
+click-handler (`document.addEventListener('click', ...)` matching any
+`[data-dropdown-trigger]`/`[data-dropdown-panel]` pair) was already
+generic — built for the "More" nav and profile menu, but never actually
+specific to either. `NotificationBellBlock`
+(`core/modules/notifications/services/NotificationBellBlock.php`) now
+emits its own self-contained dropdown (trigger + panel) and the existing
+JS just works, zero `layout.php` changes needed for the toggle itself.
+
+**Two new thin routes/actions**
+(`core/modules/notifications/controllers/NotificationsController.php`):
+`GET /notifications/unread-count` (tiny JSON, polled every 20s — longer
+than chat's 4s interval since notifications are less time-sensitive,
+deliberately lower request volume for the same shared-hosting-first
+reasoning behind chat's own transport choice) and `GET
+/notifications/panel` (re-fetched only when the dropdown is actually
+opened, not on a timer, so panel content is fresh exactly when viewed
+without polling the full list constantly). Both reuse
+`NotificationService` completely unchanged — no service-layer changes at
+all.
+
+**New shared fragment** `core/modules/notifications/templates/panel.php`
+— used for both the initial server-render (dropdown works before any JS
+runs) and the AJAX re-fetch, same "one template, not duplicated in JS"
+reasoning `chat/templates/message.php` already established. Explicit
+mark-read behavior deliberately unchanged — polling/opening the panel
+never silently marks anything read.
+
+**Verification, the actual live behavior, not just the endpoints**:
+`php -l` sweep clean. Live in the real browser as `modtest_member`:
+recorded the badge's exact starting count, inserted a real notification
+row directly, then **waited a real 22 seconds with zero page reload**
+and confirmed the badge updated on its own (8 → 9) — proving the running
+`setInterval` poll actually works, not just that the endpoint returns
+correct JSON in isolation. Clicked the bell, confirmed the panel fetch
+returned real fresh content including the just-inserted notification.
+Marked it read through the real endpoint, confirmed the count decremented
+correctly (9 → 8). Confirmed a logged-out guest gets the same empty
+block render as before (unaffected). **A real cleanup gap caught along
+the way**: found 8 leftover test notifications on `modtest_member` from
+several *earlier* verification passes tonight (reports, friend requests,
+even an uncleaned `commerce.purchase_confirmed` row from the commerce
+slice) that had never been deleted — cleaned all of them up here rather
+than leaving stale test data behind uncorrected. Dev server stopped
+clean.
+
+## PWA Support ✅ (SHIPPED 2026-07-19)
+
+**Why**: the last open item in Stage 9. Built alongside live
+notifications in the same pass rather than deferred, since real icon
+assets already existed — `favicon.png`/`icon-circle.png` are genuine
+1024–1254px brand art already wired into the header/footer/favicon, not
+placeholders, so there was no reason to wait on new artwork.
+
+**Icons generated from that real source art**, not invented: PHP GD
+(confirmed available earlier this session) resized `icon-circle.png`
+down to the three sizes a manifest/PWA actually needs —
+`icon-192.png`, `icon-512.png`, `apple-touch-icon.png` (180×180) — a
+one-time generation step, verified afterward at their exact intended
+pixel dimensions, not assumed correct.
+
+**`GET /manifest.json`**, registered in `public/index.php` right
+alongside the other core-infrastructure routes already there
+(`/sitemap.xml`, `/robots.txt`, `/site/header-banner`) — same "not
+module-toggleable" reasoning, same `Response::streamFile()` helper those
+already use. Dynamic, not a static file: reads `site_name`/
+`theme_accent_color` from `core_settings` the identical way
+`App::renderPage()` already does, so an installed app's name and theme
+color genuinely match each club's real configured branding.
+
+**`public/sw.js`** — a plain static file (no per-install dynamic values
+needed inside it). A real, narrow offline shell: cache-first only for
+genuinely static assets (`theme.css`, icons) — deliberately **not**
+HTML, since almost every page here is per-member personalized
+(unread counts, forum posts, dashboards) and caching that would show
+stale, actively misleading content. Navigations are always
+network-first, falling back to a small cached `/offline.html` only on a
+genuine network failure. No background sync, no push event handler,
+matching the "no Web Push this pass" decision directly.
+
+**`layout.php`** gained `<link rel="manifest">`, a `<meta
+name="theme-color">` using the accent color already in scope there, a
+service-worker registration script, and a real bug fix in passing: the
+existing `apple-touch-icon` link had been pointing at the raw
+1254×1254 source image the whole time instead of a properly-sized icon —
+now points at the new 180×180 file.
+
+**A real, pre-existing bug found and correctly ruled out, not chased**:
+`curl -I` on `/manifest.json` initially showed the wrong Content-Type
+(`text/html`). Investigation showed `/sitemap.xml` and `/robots.txt` —
+both pre-existing, already-shipped routes — showed the identical
+symptom. Traced to `curl -I` issuing a HEAD request, which this router
+doesn't register (GET/POST only) and 404s; a real `GET` request returns
+the correct `application/manifest+json` every time. Confirmed harmless
+for the actual feature (browsers and service workers only ever issue GET
+for manifest fetches), not something introduced by this change, and not
+something in scope to fix here.
+
+**Verification**: confirmed `/manifest.json` returns valid JSON with the
+real site name, real accent color, and correct icon paths via real `GET`
+requests; confirmed `/sw.js` serves as `application/javascript`. Live in
+the real browser: confirmed the service worker registered successfully
+(`navigator.serviceWorker.getRegistrations()` — 1 registration, correct
+scope) with zero console errors throughout. Confirmed `<link
+rel="manifest">`, the theme-color meta tag, and the corrected
+apple-touch-icon link are all present in the actual rendered DOM with
+the right values, not just written in the template. `php -l` sweep
+covered every PHP file touched (the service worker itself is static JS,
+no PHP involved). Documented in `docs/roadmap.md`, closing out the last
+open item in Stage 9 — the whole stage (chat, private messaging, live
+notifications, PWA support) shipped in a single session.
+
+**Known deployment caveat, documented not silently assumed**: real
+installability requires HTTPS in production (`127.0.0.1`/`localhost`
+qualify as secure-context exceptions for local testing, which is why
+this verified cleanly here). Most cheap shared hosts default to free
+HTTPS today, but this hasn't been verified per-club and isn't a
+guarantee.
+
 ## Stage 10 — Platform Hardening & API
 
 **Deliverables**: REST API surface over the existing service layer, optional
@@ -6437,6 +6657,15 @@ blocker that needs to exist well before this stage, not a refinement of
 something already built.)
 **Usable outcome**: Stratum is deployable via container/CI pipeline and has a
 documented public API for future integrations/mobile apps.
+
+**Added to scope 2026-07-19**: a real end-user manual — "how to use this
+site" content covering members' actual features (forum, wiki, calendar,
+chat, messages, downloads, the shop, the newsletter addon if installed),
+plus one link/card in the admin dashboard pointing to it. Recommended
+approach: reuse the existing `pages` module (`core/modules/pages/`,
+already gives admins a real editable, sanitized content page) rather than
+building a new module for this — one comprehensive page is the right v1,
+split into multiple only if it actually gets unwieldy once written.
 
 ---
 

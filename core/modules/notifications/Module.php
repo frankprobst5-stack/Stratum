@@ -48,7 +48,9 @@ return new class($app) implements ModuleInterface {
     {
         $blocks->register('notifications.bell', fn (): NotificationBellBlock => new NotificationBellBlock(
             $this->app->auth,
-            new NotificationService($this->app->db)
+            new NotificationService($this->app->db),
+            $this->app->templates,
+            $this->app->session
         ));
     }
 };

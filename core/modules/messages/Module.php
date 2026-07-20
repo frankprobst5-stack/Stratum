@@ -7,6 +7,7 @@ use Stratum\Core\BlockRegistry;
 use Stratum\Core\HookRegistry;
 use Stratum\Core\ModuleInterface;
 use Stratum\Modules\Messages\MessagesIconBlock;
+use Stratum\Modules\Messages\MessagesService;
 
 /**
  * Takes a constructor argument (same pattern as ads/sponsors/ticker's
@@ -37,6 +38,6 @@ return new class($app) implements ModuleInterface {
 
     public function registerBlocks(BlockRegistry $blocks): void
     {
-        $blocks->register('messages.icon', fn (): MessagesIconBlock => new MessagesIconBlock($this->app->auth));
+        $blocks->register('messages.icon', fn (): MessagesIconBlock => new MessagesIconBlock($this->app->auth, new MessagesService($this->app->db)));
     }
 };

@@ -157,15 +157,15 @@ reusable class other blocks can adopt later.
 **`.strat-pill`** — status labels (pinned/locked, scan-status), tags,
 type badges. Replaced the `background:#eef1f7;color:#2f6fed;
 border-radius:12px` tag-pill snippet formerly copy-pasted inline across
-`forum/topic.php`, `wiki/show.php`, and `tags/index.php`. `articles/
-show.php` still has its own copy of this pattern — not covered by
-either content-page-pass slice, still open.
+`forum/topic.php`, `wiki/show.php`, `tags/index.php`, and (closed out
+2026-07-19) `articles/show.php` — every known copy of this pattern is
+now gone.
 
-**`.strat-inline-box`** — comments on wiki pages/events/photos.
+**`.strat-inline-box`** — comments on wiki pages/events/photos/articles.
 Replaced the `background:#f4f5f7;border-radius:6px` snippet formerly
-copy-pasted inline across `wiki/show.php`, `calendar/event.php`, and
-`gallery/photo.php`. Simpler than `.strat-post`: no avatar column, no
-signature/footer — just author/timestamp/body.
+copy-pasted inline across `wiki/show.php`, `calendar/event.php`,
+`gallery/photo.php`, and `articles/show.php`. Simpler than `.strat-post`:
+no avatar column, no signature/footer — just author/timestamp/body.
 
 **`.strat-photo-grid`** / **`.strat-photo-tile`** (new, second
 content-page slice) — gallery album covers and individual photos.

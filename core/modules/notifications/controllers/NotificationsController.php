@@ -32,6 +32,37 @@ final class NotificationsController
         return Response::html($this->app->renderPage($content, $request));
     }
 
+    /** Tiny JSON poll target for the live header badge — deliberately just a count, not the list, to keep polling cheap. */
+    public function unreadCount(Request $request): Response
+    {
+        if (!$this->app->auth->check()) {
+            return Response::json(['unreadCount' => 0]);
+        }
+
+        $user = $this->app->auth->user();
+        $count = (new NotificationService($this->app->db))->unreadCount((int) $user['id']);
+
+        return Response::json(['unreadCount' => $count]);
+    }
+
+    /** The dropdown's fragment — fetched fresh each time it's opened, same template as the initial server-render. */
+    public function panel(Request $request): Response
+    {
+        if (!$this->app->auth->check()) {
+            return Response::html('', 401);
+        }
+
+        $user = $this->app->auth->user();
+        $service = new NotificationService($this->app->db);
+
+        $html = $this->app->templates->render('notifications', 'panel', [
+            'notifications' => array_slice($service->listForUser((int) $user['id']), 0, 8),
+            'csrfToken' => $this->app->session->csrfToken(),
+        ]);
+
+        return Response::html($html);
+    }
+
     public function markRead(Request $request): Response
     {
         if (!$this->app->auth->check()) {

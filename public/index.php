@@ -217,6 +217,43 @@ $router->get('/robots.txt', static function (Request $request) use ($app): Respo
     return Response::streamFile($body, 'text/plain; charset=utf-8');
 });
 
+// PWA manifest (Stage 9 PWA support, 2026-07-19) — dynamic, not a static
+// file, so an installed app's name/theme color genuinely reflect each
+// club's actual configured branding rather than a hardcoded default. Same
+// core_settings read App::renderPage() already does. Icons were generated
+// once from the real icon-circle.png brand art, not placeholders — see
+// docs/roadmap.md.
+$router->get('/manifest.json', static function (Request $request) use ($app): Response {
+    $settingsRows = $app->db->fetchAll(
+        'SELECT `key`, `value` FROM ' . $app->db->table('core_settings')
+            . " WHERE `key` IN ('site_name', 'theme_accent_color')"
+    );
+    $settings = array_column($settingsRows, 'value', 'key');
+    $siteName = $settings['site_name'] ?? 'Stratum CMS';
+    $accentColor = $settings['theme_accent_color'] ?? '#2f6fed';
+    if (preg_match('/^#[0-9a-f]{6}$/i', $accentColor) !== 1) {
+        $accentColor = '#2f6fed';
+    }
+
+    $manifest = [
+        'name' => $siteName,
+        'short_name' => mb_substr($siteName, 0, 12),
+        'start_url' => '/',
+        'display' => 'standalone',
+        'background_color' => '#15171c',
+        'theme_color' => $accentColor,
+        'icons' => [
+            ['src' => '/assets/images/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png'],
+            ['src' => '/assets/images/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png'],
+        ],
+    ];
+
+    return Response::streamFile(
+        (string) json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+        'application/manifest+json'
+    );
+});
+
 // Custom header banner, if an admin has uploaded one (Stage 8 header/
 // masthead, 2026-07-18) — served from outside the webroot same as every
 // other uploaded image in this app, not module-toggleable so it lives
