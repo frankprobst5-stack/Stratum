@@ -108,7 +108,7 @@ $userInitials = $currentUser !== null ? strtoupper(substr((string) $currentUser[
     <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="<?= e($accentColor) ?>">
-    <link rel="stylesheet" href="/assets/css/theme.css?v=5">
+    <link rel="stylesheet" href="/assets/css/theme.css?v=6">
     <?php /* raw(), not e(): <style> is an HTML5 "raw text" element — entities like &quot; are NOT decoded inside it, so escaping a quoted font name (e.g. "Times New Roman") would emit literal &quot; characters and break the declaration. Safe here because $fontStackCss only ever comes from FontStacks::cssFor()'s own fixed, hardcoded OPTIONS map — never directly from user input. Only these two values are genuinely per-install-dynamic — everything else lives in theme.css, see docs/design-system.md. */ ?>
     <style>:root { --strat-accent: <?= e($accentColor) ?>; --strat-font: <?= raw($fontStackCss) ?>; }</style>
     <?php if ($darkMode === 'auto'): ?>
@@ -245,20 +245,38 @@ $layoutColumns = trim((trim($sidebarLeftHtml) !== '' ? '200px ' : '') . '1fr' . 
     // Single click handler for every topbar dropdown (nav overflow, search,
     // notifications aren't dropdowns but profile menu is) — vanilla JS, no
     // framework, same "no build step" posture this app holds everywhere.
+    //
+    // Panels are position: fixed (see theme.css) so they escape
+    // .topbar-nav's overflow: hidden — which meant top/right can no
+    // longer be static CSS (fixed is relative to the viewport, not the
+    // trigger), so this computes them from the trigger's real position
+    // every time a panel opens.
+    function closeAllPanels() {
+        document.querySelectorAll('.strat-header-dropdown-panel.open').forEach(function (p) { p.classList.remove('open'); });
+    }
     document.addEventListener('click', function (e) {
         var trigger = e.target.closest('[data-dropdown-trigger]');
         if (trigger) {
             var panel = document.querySelector('[data-dropdown-panel="' + trigger.getAttribute('data-dropdown-trigger') + '"]');
             var wasOpen = panel && panel.classList.contains('open');
-            document.querySelectorAll('.strat-header-dropdown-panel.open').forEach(function (p) { p.classList.remove('open'); });
-            if (panel && !wasOpen) { panel.classList.add('open'); }
+            closeAllPanels();
+            if (panel && !wasOpen) {
+                var rect = trigger.getBoundingClientRect();
+                panel.style.top = (rect.bottom + 8) + 'px';
+                panel.style.right = (window.innerWidth - rect.right) + 'px';
+                panel.classList.add('open');
+            }
             e.stopPropagation();
             return;
         }
         if (!e.target.closest('.strat-header-dropdown-panel')) {
-            document.querySelectorAll('.strat-header-dropdown-panel.open').forEach(function (p) { p.classList.remove('open'); });
+            closeAllPanels();
         }
     });
+    // A fixed-position panel stays put on-screen while the page scrolls
+    // underneath it, drifting away from its trigger — simplest correct
+    // fix is just closing it, same as a click outside already does.
+    window.addEventListener('scroll', closeAllPanels, true);
 })();
 </script>
 <?php /* PWA service worker (Stage 9, 2026-07-19) — offline shell only, no push; see public/sw.js. */ ?>

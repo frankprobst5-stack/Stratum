@@ -164,8 +164,24 @@ body {
     padding: 0 0.35rem; font-size: 0.62rem; font-weight: 700; line-height: 1.3;
 }
 .strat-header-dropdown { position: relative; display: inline-block; }
+/*
+ * position: fixed, not absolute — found live 2026-07-21: .topbar-nav's
+ * `overflow: hidden` (a genuine, still-needed guard against the primary
+ * nav row spilling past its flex-shrunk width) was silently clipping
+ * this panel's whole vertical drop for the "More" trigger specifically,
+ * since an absolutely-positioned descendant is still clipped by an
+ * ancestor's overflow even though its containing block is the closer
+ * `.strat-header-dropdown` — the click handler worked, the `.open` class
+ * toggled, `display` became `block`, but nothing was ever visible.
+ * `position: fixed` escapes every ancestor's overflow clipping (no
+ * ancestor here sets transform/filter/will-change, which would otherwise
+ * turn it back into a new containing block) — top/right are computed
+ * from the trigger's real position by the click handler below instead of
+ * this static right:0/top:100%, since fixed positioning is relative to
+ * the viewport, not the trigger.
+ */
 .strat-header-dropdown-panel {
-    display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; background: var(--strat-dropdown-bg);
+    display: none; position: fixed; background: var(--strat-dropdown-bg);
     color: var(--strat-text); border-radius: var(--strat-radius-sm); box-shadow: var(--strat-shadow); padding: 0.4rem;
     z-index: var(--strat-z-dropdown); min-width: 11rem;
 }
