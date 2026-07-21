@@ -1,0 +1,22 @@
+# Never bake real secrets or local state into the image — .env is bind-
+# mounted at runtime instead (see docker-compose.yml).
+.env
+.env.testing
+.git
+.github
+vendor
+node_modules
+
+# Test-only — never needed inside the runtime image.
+tests
+phpunit.xml
+docker-compose.test.yml
+.env.testing.example
+
+# Runtime data — always volume-mounted, never image-baked (see
+# docs/database-conventions.md on storage/ being the only writable dir).
+storage/uploads/*
+storage/cache/*
+storage/logs/*
+storage/backups/*
+!storage/**/.gitkeep

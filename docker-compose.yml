@@ -1,0 +1,52 @@
+# Production/self-host compose file — distinct from docker-compose.test.yml
+# (throwaway, no volume, port 3307, used only by the automated test suite).
+# This one persists real data and is meant to be left running.
+#
+# First run:
+#   cp .env.example .env
+#   # edit .env: set DB_HOST=stratum_db (the service name below, not
+#   # 127.0.0.1 — containers reach each other by service name on the
+#   # compose network) and a real DB_PASSWORD matching MYSQL_PASSWORD
+#   # below.
+#   docker compose up -d
+#   docker compose exec app php bin/install.php
+#
+# Or skip bin/install.php and use the web installer at /install.php —
+# same path a non-technical club admin uses on real shared hosting.
+services:
+  app:
+    build: .
+    ports:
+      - "8095:80"
+    volumes:
+      - ./.env:/var/www/html/.env:ro
+      - stratum_storage:/var/www/html/storage
+    depends_on:
+      stratum_db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  stratum_db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: stratum
+      MYSQL_USER: stratum
+      MYSQL_PASSWORD: change_me_to_match_.env
+      MYSQL_ROOT_PASSWORD: change_me_too
+    volumes:
+      - stratum_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      # First boot on a fresh volume (initdb + InnoDB setup) can take well
+      # over a minute — failures during start_period don't count against
+      # retries, so app doesn't get marked "dependency unhealthy" and
+      # refuse to start before mysqld has even finished initializing.
+      start_period: 90s
+    restart: unless-stopped
+
+volumes:
+  stratum_db_data:
+  stratum_storage:

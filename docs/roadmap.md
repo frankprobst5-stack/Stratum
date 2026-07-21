@@ -7354,6 +7354,87 @@ structurally unlikely there; a targeted pass is still real, tracked
 future work, just not this session's highest-value next hour. Remaining
 Stage 10 items: GraphQL, container deployment.
 
+## Stage 10, Container Deployment ✅ (SHIPPED 2026-07-20)
+
+**Why**: every club migrating to Stratum is expected to self-install on
+ordinary shared hosting (see `docs/architecture.md`) — that stays the
+primary target and this doesn't replace it. But a technical admin running
+Stratum on their own VPS would rather `docker compose up` than provision
+Apache/PHP/MySQL by hand, so this adds that as an alternative path, not a
+second install story with its own rules.
+
+**`Dockerfile`, two stages**: a `composer:2` stage installs dependencies
+with `--optimize-autoloader` (kept separate so a `composer.json` change
+invalidates only that layer, not the whole image), then a `php:8.2-apache`
+runtime stage — 8.2 to match the same floor `composer.json` states and CI
+already tests against, not local dev's newer version. Extensions:
+`pdo_mysql mbstring gd exif fileinfo zip` — the same set CI installs, plus
+`zip` for real theme/addon package installs and the self-update mechanism
+(`SafeZipExtractor`), which CI's lint/test job never exercises but a real
+deployment does. `gd` is built `--with-jpeg --with-webp` since
+`core/services/ImageThumbnailer.php` uses both formats.
+
+**Document root is `public/`, not the project root** — `sed`-patches
+Apache's vhost and `apache2.conf` to point there and flips
+`AllowOverride None` to `All`, so `public/.htaccess`'s existing
+front-controller rewrite rule works completely unmodified. Same posture
+already proven against a real `php:8.2-apache` container earlier in this
+project (see the Apache verification notes in this doc's dev-environment
+history) — not a new pattern, a second application of one already tested.
+
+**`docker-compose.yml`** (distinct from `docker-compose.test.yml`, which
+stays throwaway/no-volume/test-only): an `app` service built from the
+Dockerfile plus a `stratum_db` MySQL 8.0 service, both with named volumes
+(`stratum_db_data`, `stratum_storage`) so data survives a container
+recreate, not just a restart. `.env` is bind-mounted read-only into the
+container rather than baked into the image or reconstructed from Compose
+environment variables — `Config` (`core/services/Config.php`) only ever
+reads a real `.env` file and throws if it's missing, so this needed zero
+application code changes and matches exactly how local dev and a real
+shared-hosting install already work: `cp .env.example .env`, fill it in,
+same file format everywhere. `.dockerignore` keeps `.env`, `.git`,
+`vendor` (rebuilt in-image), and `tests/` out of the build context.
+
+**Verification**: built the image clean (after iterating on the base
+image's actual build-dependency needs — `libpng-dev`/`libjpeg-dev`/
+`libwebp-dev`/`libonig-dev`, none bundled by `php:8.2-apache` by default).
+Ran the full stack via `docker compose up -d` against a throwaway copy in
+the scratchpad (never the real project `.env`, same discipline as every
+other throwaway-Docker verification this project has done), then
+end-to-end: `php bin/install.php` inside the container applied all ~35
+modules' migrations and created a real admin account against the
+containerized MySQL; homepage and a pretty URL (`/forum`) both returned
+200 (proving the docroot/`AllowOverride All`/rewrite chain actually
+works, not just that Apache starts); a real static file served directly
+without going through `index.php`; logged in as the new admin over a real
+password-hash round trip; confirmed `gd`/`zip`/`exif`/`mbstring` all
+loaded with full JPEG/PNG/GIF/WebP support via `gd_info()`; restarted the
+`app` container and confirmed the site and the admin account both still
+worked, proving state lives in the volume-backed MySQL container, not the
+stateless app one.
+
+**A real gotcha hit during verification, not a flaw in the compose
+file**: MySQL's official image performs a two-phase startup on a fresh
+volume — a temporary server comes up first to run init SQL (user/database
+creation), answers `mysqladmin ping` successfully, then shuts down and
+restarts as the real server. The healthcheck can report healthy during
+that brief temp-server window, so a command run immediately after
+`depends_on: condition: service_healthy` is satisfied can still hit
+"connection refused" during the handover. Added a 90s `start_period` to
+the healthcheck (failures during it don't count against `retries`, giving
+first-boot init room to finish) and, for this session's own verification,
+just waited a beat and retried — this is well-known, generally-accepted
+behavior of the official `mysql` image itself, not something worth
+building custom retry/wait-for-it logic into `bin/install.php` or the
+Dockerfile for.
+
+**Deliberately not built**: a multi-arch build (amd64 only — no evidence
+any target user needs arm64 yet), a published image on a registry (the
+Dockerfile is the deliverable; publishing implies an ongoing release
+process this project doesn't have yet), and any Kubernetes/Helm chart
+(single-VPS `docker compose up` is the actual use case this was built
+for). Remaining Stage 10 item: GraphQL (still optional, not scheduled).
+
 ---
 
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
