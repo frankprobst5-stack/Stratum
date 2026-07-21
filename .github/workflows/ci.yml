@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: PHP lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      # Every .php file outside vendor/ and storage/ (uploads, cache,
+      # backups) — mirrors the manual `php -l` sweep this project has run
+      # by hand after every change since Stage 1.
+      - name: php -l sweep
+        run: |
+          find . -path ./vendor -prune -o -path ./storage -prune -o -name '*.php' -print \
+            | xargs -n1 php -l
+
+  test:
+    name: PHPUnit
+    runs-on: ubuntu-latest
+
+    # Real MySQL, not SQLite — this app's migrations are too
+    # MySQL-specific (ENGINE=InnoDB, real FOREIGN KEYs, NOW()) to fake.
+    # Same mysql:8.0 image docker-compose.test.yml uses for local dev, so
+    # CI and local runs exercise the identical migration path.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_only_not_a_real_secret
+          MYSQL_DATABASE: stratum_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mbstring, gd, exif, fileinfo
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # Points at the mysql service container above — same shape as
+      # .env.testing.example, just the CI runner's own MySQL instead of
+      # the local Docker container developers run by hand.
+      - name: Write .env.testing
+        run: |
+          cat > .env.testing <<'EOF'
+          APP_ENV=testing
+          APP_DEBUG=true
+
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=stratum_test
+          DB_USERNAME=root
+          DB_PASSWORD=test_only_not_a_real_secret
+          DB_PREFIX=strat_
+          DB_CHARSET=utf8mb4
+
+          PAGE_CACHE_ENABLED=false
+          PAGE_CACHE_TTL_SECONDS=300
+          EOF
+
+      - name: Run test suite
+        run: composer test
