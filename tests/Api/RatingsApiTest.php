@@ -93,10 +93,10 @@ final class RatingsApiTest extends TestCase
     {
         $article = $this->createArticle();
         $rater = $this->createUser();
-        $app = $this->asUser($rater);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($rater);
 
         $controller = new RatingsApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/ratings/article/' . $article['id'], body: ['score' => '5']);
+        $request = $this->makeRequest('POST', '/api/v1/ratings/article/' . $article['id'], body: ['score' => '5'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => (string) $article['id']]);
 
         $response = $controller->rate($request);
@@ -109,10 +109,10 @@ final class RatingsApiTest extends TestCase
         $article = $this->createArticle();
         $rater = $this->createUser();
         $this->grantCapability((int) $rater['id'], 'ratings.create');
-        $app = $this->asUser($rater);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($rater);
 
         $controller = new RatingsApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/ratings/article/' . $article['id'], body: ['score' => '4']);
+        $request = $this->makeRequest('POST', '/api/v1/ratings/article/' . $article['id'], body: ['score' => '4'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => (string) $article['id']]);
 
         $response = $controller->rate($request);
@@ -129,10 +129,10 @@ final class RatingsApiTest extends TestCase
         $article = $this->createArticle();
         $rater = $this->createUser();
         $this->grantCapability((int) $rater['id'], 'ratings.create');
-        $app = $this->asUser($rater);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($rater);
 
         $controller = new RatingsApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/ratings/article/' . $article['id'], body: ['score' => '9']);
+        $request = $this->makeRequest('POST', '/api/v1/ratings/article/' . $article['id'], body: ['score' => '9'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => (string) $article['id']]);
 
         $response = $controller->rate($request);

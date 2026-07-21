@@ -36,13 +36,13 @@ final class MessagesApiTest extends TestCase
     {
         $sender = $this->createUser();
         $recipient = $this->createUser();
-        $app = $this->asUser($sender);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($sender);
 
         $controller = new MessagesApiController($app);
         $request = $this->makeRequest('POST', '/api/v1/messages/start', body: [
             'username' => $recipient['username'],
             'body' => 'hello there',
-        ]);
+        ], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
 
         $response = $controller->start($request);
         $body = json_decode($response->body(), true);
@@ -58,13 +58,13 @@ final class MessagesApiTest extends TestCase
     public function testStartRejectsUnknownUsername(): void
     {
         $sender = $this->createUser();
-        $app = $this->asUser($sender);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($sender);
 
         $controller = new MessagesApiController($app);
         $request = $this->makeRequest('POST', '/api/v1/messages/start', body: [
             'username' => 'no-such-user-' . bin2hex(random_bytes(4)),
             'body' => 'hello',
-        ]);
+        ], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
 
         $response = $controller->start($request);
 
@@ -74,13 +74,13 @@ final class MessagesApiTest extends TestCase
     public function testStartRejectsMessagingSelf(): void
     {
         $sender = $this->createUser();
-        $app = $this->asUser($sender);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($sender);
 
         $controller = new MessagesApiController($app);
         $request = $this->makeRequest('POST', '/api/v1/messages/start', body: [
             'username' => $sender['username'],
             'body' => 'hello me',
-        ]);
+        ], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
 
         $response = $controller->start($request);
 
@@ -97,9 +97,9 @@ final class MessagesApiTest extends TestCase
         $conversationId = $messagesService->findOrCreateConversation((int) $userA['id'], (int) $userB['id']);
         $this->conversationIds[] = $conversationId;
 
-        $app = $this->asUser($outsider);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($outsider);
         $controller = new MessagesApiController($app);
-        $request = $this->makeRequest('GET', '/api/v1/messages/conversations/' . $conversationId);
+        $request = $this->makeRequest('GET', '/api/v1/messages/conversations/' . $conversationId, server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $conversationId]);
 
         $response = $controller->show($request);
@@ -119,9 +119,9 @@ final class MessagesApiTest extends TestCase
 
         $this->assertSame(1, $messagesService->unreadCount((int) $userB['id']));
 
-        $app = $this->asUser($userB);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($userB);
         $controller = new MessagesApiController($app);
-        $request = $this->makeRequest('GET', '/api/v1/messages/conversations/' . $conversationId);
+        $request = $this->makeRequest('GET', '/api/v1/messages/conversations/' . $conversationId, server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $conversationId]);
 
         $response = $controller->show($request);
@@ -141,9 +141,9 @@ final class MessagesApiTest extends TestCase
         $conversationId = (new MessagesService($this->db))->findOrCreateConversation((int) $userA['id'], (int) $userB['id']);
         $this->conversationIds[] = $conversationId;
 
-        $app = $this->asUser($outsider);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($outsider);
         $controller = new MessagesApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/messages/conversations/' . $conversationId . '/reply', body: ['body' => 'sneaky']);
+        $request = $this->makeRequest('POST', '/api/v1/messages/conversations/' . $conversationId . '/reply', body: ['body' => 'sneaky'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $conversationId]);
 
         $response = $controller->reply($request);
@@ -159,9 +159,9 @@ final class MessagesApiTest extends TestCase
         $conversationId = (new MessagesService($this->db))->findOrCreateConversation((int) $userA['id'], (int) $userB['id']);
         $this->conversationIds[] = $conversationId;
 
-        $app = $this->asUser($userB);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($userB);
         $controller = new MessagesApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/messages/conversations/' . $conversationId . '/reply', body: ['body' => 'a real reply']);
+        $request = $this->makeRequest('POST', '/api/v1/messages/conversations/' . $conversationId . '/reply', body: ['body' => 'a real reply'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $conversationId]);
 
         $response = $controller->reply($request);
@@ -179,9 +179,9 @@ final class MessagesApiTest extends TestCase
         $conversationId = (new MessagesService($this->db))->findOrCreateConversation((int) $userA['id'], (int) $userB['id']);
         $this->conversationIds[] = $conversationId;
 
-        $app = $this->asUser($userB);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($userB);
         $controller = new MessagesApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/messages/conversations/' . $conversationId . '/reply', body: ['body' => '  ']);
+        $request = $this->makeRequest('POST', '/api/v1/messages/conversations/' . $conversationId . '/reply', body: ['body' => '  '], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $conversationId]);
 
         $response = $controller->reply($request);

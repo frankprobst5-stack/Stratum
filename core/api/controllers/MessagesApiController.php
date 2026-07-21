@@ -21,7 +21,7 @@ final class MessagesApiController extends ApiController
 {
     public function conversations(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 
@@ -40,7 +40,7 @@ final class MessagesApiController extends ApiController
     /** Mirrors MessagesController::conversation() exactly, including marking it read as a side effect of viewing — same reasoning chat's auto-join has for staying in a GET. */
     public function show(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 
@@ -69,7 +69,7 @@ final class MessagesApiController extends ApiController
     /** Mirrors MessagesController::reply() exactly (participant check, empty-body rejection, same notify()). */
     public function reply(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 
@@ -107,7 +107,7 @@ final class MessagesApiController extends ApiController
     /** Mirrors MessagesController::start() exactly (username resolution, self-message rejection, same notify()). */
     public function start(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 

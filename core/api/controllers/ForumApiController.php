@@ -55,7 +55,7 @@ final class ForumApiController extends ApiController
      */
     public function reply(Request $request): Response
     {
-        if (($guard = $this->guard('forum.reply')) !== null) {
+        if (($guard = $this->guard($request, 'forum.reply')) !== null) {
             return $guard;
         }
 

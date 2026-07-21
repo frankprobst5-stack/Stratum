@@ -41,7 +41,7 @@ final class RatingsApiController extends ApiController
      */
     public function rate(Request $request): Response
     {
-        if (($guard = $this->guard('ratings.create')) !== null) {
+        if (($guard = $this->guard($request, 'ratings.create')) !== null) {
             return $guard;
         }
 

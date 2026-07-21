@@ -80,13 +80,13 @@ final class ChatApiTest extends TestCase
         $owner = $this->createUser();
         $room = $this->createPublicRoom((int) $owner['id']);
         $viewer = $this->createUser();
-        $app = $this->asUser($viewer);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($viewer);
 
         $chat = new ChatService($this->db);
         $this->assertFalse($chat->isMember($room['id'], (int) $viewer['id']));
 
         $controller = new ChatApiController($app);
-        $request = $this->makeRequest('GET', '/api/v1/chat/rooms/' . $room['id'] . '/messages');
+        $request = $this->makeRequest('GET', '/api/v1/chat/rooms/' . $room['id'] . '/messages', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $room['id']]);
 
         $response = $controller->messages($request);
@@ -99,10 +99,10 @@ final class ChatApiTest extends TestCase
     {
         $room = $this->createPrivateRoom();
         $outsider = $this->createUser();
-        $app = $this->asUser($outsider);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($outsider);
 
         $controller = new ChatApiController($app);
-        $request = $this->makeRequest('GET', '/api/v1/chat/rooms/' . $room['id'] . '/messages');
+        $request = $this->makeRequest('GET', '/api/v1/chat/rooms/' . $room['id'] . '/messages', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $room['id']]);
 
         $response = $controller->messages($request);
@@ -115,10 +115,10 @@ final class ChatApiTest extends TestCase
         $room = $this->createPrivateRoom();
         $member = $this->createUser();
         (new ChatService($this->db))->joinRoom($room['id'], (int) $member['id']);
-        $app = $this->asUser($member);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($member);
 
         $controller = new ChatApiController($app);
-        $request = $this->makeRequest('GET', '/api/v1/chat/rooms/' . $room['id'] . '/messages');
+        $request = $this->makeRequest('GET', '/api/v1/chat/rooms/' . $room['id'] . '/messages', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $room['id']]);
 
         $response = $controller->messages($request);
@@ -147,10 +147,10 @@ final class ChatApiTest extends TestCase
         $owner = $this->createUser();
         $room = $this->createPublicRoom((int) $owner['id']);
         $stranger = $this->createUser();
-        $app = $this->asUser($stranger);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($stranger);
 
         $controller = new ChatApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/chat/rooms/' . $room['id'] . '/messages', body: ['body' => 'hi']);
+        $request = $this->makeRequest('POST', '/api/v1/chat/rooms/' . $room['id'] . '/messages', body: ['body' => 'hi'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $room['id']]);
 
         $response = $controller->postMessage($request);
@@ -162,10 +162,10 @@ final class ChatApiTest extends TestCase
     {
         $owner = $this->createUser();
         $room = $this->createPublicRoom((int) $owner['id']);
-        $app = $this->asUser($owner);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($owner);
 
         $controller = new ChatApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/chat/rooms/' . $room['id'] . '/messages', body: ['body' => 'a real message']);
+        $request = $this->makeRequest('POST', '/api/v1/chat/rooms/' . $room['id'] . '/messages', body: ['body' => 'a real message'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $room['id']]);
 
         $response = $controller->postMessage($request);
@@ -179,10 +179,10 @@ final class ChatApiTest extends TestCase
     {
         $owner = $this->createUser();
         $room = $this->createPublicRoom((int) $owner['id']);
-        $app = $this->asUser($owner);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($owner);
 
         $controller = new ChatApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/chat/rooms/' . $room['id'] . '/messages', body: ['body' => '   ']);
+        $request = $this->makeRequest('POST', '/api/v1/chat/rooms/' . $room['id'] . '/messages', body: ['body' => '   '], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $room['id']]);
 
         $response = $controller->postMessage($request);

@@ -7272,6 +7272,88 @@ self-installs on their own unknown shared host), so there's nothing to
 deploy *to*. Remaining Stage 10 items: GraphQL, container deployment,
 and the security audit.
 
+## Stage 10, Security Audit ✅ (SHIPPED 2026-07-20)
+
+**Scope**: focused on the REST API surface built this session (7 slices,
+now live and publicly reachable) rather than attempting a full manual
+pass across all ~30 modules in one sitting — the same "prove the pattern
+against the newest, highest-risk surface first" discipline every other
+Stage 10 slice has used.
+
+**Found: every API write endpoint accepted a bare browser session cookie,
+with no CSRF protection at that layer.** `Auth::user()` was written to
+resolve a session first and fall back to a Bearer token only when there
+was no session (`core/services/Auth.php`) — a deliberate, documented
+design choice at the time, reused so API controllers didn't need their
+own auth logic. But `ApiController::guard()` only ever checked
+`Auth::check()`/`can()`, never whether the *credential* was actually a
+Bearer token. Every web `*Controller.php` mutation calls
+`Session::verifyCsrf()`; not one `core/api/controllers/*` file did.
+Combined, this meant a logged-in member's ambient session cookie alone —
+no token, no CSRF value — was sufficient to drive `POST
+/api/v1/bookmarks/{type}/{id}`, `/comments/...`, `/ratings/...`,
+`/forum/topics/{id}/reply`, `/chat/rooms/{id}/messages`, and
+`/messages/...`. Reproduced live: `curl -b <session cookie jar>` with no
+`Authorization` header toggled `modtest_member`'s real bookmark on
+article 8 (200, no auth error) — restored immediately after confirming.
+The session cookie's `SameSite=Lax` setting (`core/services/Session.php`)
+happens to block this specific vector from an actual cross-site page in
+every modern browser (Lax cookies never ride along on a cross-site POST
+or `fetch()`), so this wasn't a currently-exploitable-from-a-third-party-
+page bug in practice — but relying solely on a browser policy neither the
+app nor its docs ever asserted as the actual defense is fragile, and the
+API's own docs already claimed "every POST endpoint requires [a Bearer
+token]" — a claim the code didn't actually enforce.
+
+**Fix, two parts**:
+- `ApiController::guard()` (`core/api/controllers/ApiController.php`) now
+  takes the current `Request` and independently resolves the
+  `Authorization` header via `ApiTokenService::resolveUserIdFromToken()`
+  *before* ever consulting `Auth`. Missing header, empty token, or a
+  token that doesn't resolve are all a hard 401 — never a fallback to
+  whatever `Auth::check()` might otherwise resolve via session.
+- `Auth::user()` now tries the Bearer token first, session second (the
+  reverse of before) — so on the one request shape that could carry both
+  a session cookie and a Bearer header, the explicitly-presented
+  credential decides, and every downstream `can()`/`user()` call in the
+  same request stays consistent with what `guard()` already validated.
+  A plain web request never sends an `Authorization` header, so this is
+  a no-op for every non-API route.
+
+**Tests**: `TestCase::asApiUser()` added — mints a real token via
+`ApiTokenService` and builds an `App` whose `Auth` resolves it via a
+staged `HTTP_AUTHORIZATION` header (never a session), returning both the
+`App` and the raw token since the action's own `Request` needs the same
+header independently (it's a second `Request` object, built from
+`$_SERVER` at a different moment than the one baked into `Auth`). Every
+existing write-endpoint test across `ForumApiTest`, `CommentsApiTest`,
+`RatingsApiTest`, `ChatApiTest`, `BookmarksApiTest`, and
+`MessagesApiTest` — 19 tests total — switched from the old session-only
+`asUser()` to `asApiUser()`, since those tests now exercise the real
+production auth path instead of a shortcut the fix just closed off.
+`CommerceApiTest`/`DuesApiTest` untouched — both are reads-only, never
+call `guard()`.
+
+**Verification**: full suite green (87 tests, 156 assertions) after the
+fix. Live re-verification against the running dev server: (1) the
+original session-only forge now 401s; (2) session cookie plus a garbage
+`Authorization: Bearer invalid` header — the scenario the `Auth::user()`
+priority flip specifically closes — now also 401s, where before the fix
+this one would have silently authorized off the ambient session; (3) no
+credentials at all still 401s as before; (4) a freshly-minted real token,
+Bearer-only, no cookie at all, still round-trips a real bookmark toggle
+correctly — confirming the legitimate path wasn't broken by any of this.
+Test token created and revoked through the real profile-page flow
+afterward, no leftover state.
+
+**Deliberately not built (yet)**: a full manual audit of the other ~28
+modules' web controllers — every one already goes through
+`Session::verifyCsrf()` on mutation by established convention (confirmed
+via a repo-wide grep, not sampled), so the same class of bug is
+structurally unlikely there; a targeted pass is still real, tracked
+future work, just not this session's highest-value next hour. Remaining
+Stage 10 items: GraphQL, container deployment.
+
 ---
 
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not

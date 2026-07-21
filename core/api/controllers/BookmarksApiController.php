@@ -20,7 +20,7 @@ final class BookmarksApiController extends ApiController
      */
     public function index(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 
@@ -45,7 +45,7 @@ final class BookmarksApiController extends ApiController
      */
     public function toggle(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 

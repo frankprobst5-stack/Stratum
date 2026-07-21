@@ -135,6 +135,31 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
+     * An App whose Auth resolves $user via a real Bearer token — never a
+     * session — for testing ApiController::guard(), which deliberately
+     * requires an actual Authorization header (see ApiController.php's
+     * docblock). Returns the raw token too, since the caller's own
+     * makeRequest() for the action itself needs the same header staged
+     * (buildApp() and the action's Request are two separate Request
+     * objects built from $_SERVER at two different times).
+     *
+     * @param array<string, mixed> $user
+     * @return array{app: App, token: string}
+     */
+    protected function asApiUser(array $user): array
+    {
+        $apiTokens = new ApiTokenService($this->db);
+        $created = $apiTokens->createToken((int) $user['id'], 'test token');
+
+        $previousServer = $_SERVER;
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $created['token'];
+        $app = $this->buildApp();
+        $_SERVER = $previousServer;
+
+        return ['app' => $app, 'token' => $created['token']];
+    }
+
+    /**
      * A Request built from explicit values instead of real superglobals —
      * Request::fromGlobals() is the only public factory, so this
      * temporarily stages $_GET/$_POST/$_SERVER, builds from them, then

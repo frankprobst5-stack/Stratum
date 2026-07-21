@@ -67,10 +67,10 @@ final class BookmarksApiTest extends TestCase
     public function testToggleRejectsUnknownType(): void
     {
         $user = $this->createUser();
-        $app = $this->asUser($user);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($user);
 
         $controller = new BookmarksApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/bookmarks/bogus/1');
+        $request = $this->makeRequest('POST', '/api/v1/bookmarks/bogus/1', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'bogus', 'id' => '1']);
 
         $response = $controller->toggle($request);
@@ -81,10 +81,10 @@ final class BookmarksApiTest extends TestCase
     public function testToggleRejectsUnresolvableTarget(): void
     {
         $user = $this->createUser();
-        $app = $this->asUser($user);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($user);
 
         $controller = new BookmarksApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/bookmarks/article/999999999');
+        $request = $this->makeRequest('POST', '/api/v1/bookmarks/article/999999999', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => '999999999']);
 
         $response = $controller->toggle($request);
@@ -96,10 +96,10 @@ final class BookmarksApiTest extends TestCase
     {
         $article = $this->createArticle();
         $user = $this->createUser();
-        $app = $this->asUser($user);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($user);
 
         $controller = new BookmarksApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/bookmarks/article/' . $article['id']);
+        $request = $this->makeRequest('POST', '/api/v1/bookmarks/article/' . $article['id'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => (string) $article['id']]);
 
         $addResponse = $controller->toggle($request);
@@ -107,7 +107,7 @@ final class BookmarksApiTest extends TestCase
         $this->assertSame(200, $addResponse->status());
         $this->assertTrue($addBody['data']['bookmarked']);
 
-        $indexResponse = $controller->index($this->makeRequest('GET', '/api/v1/bookmarks'));
+        $indexResponse = $controller->index($this->makeRequest('GET', '/api/v1/bookmarks', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]));
         $indexBody = json_decode($indexResponse->body(), true);
         $titles = array_column($indexBody['data'], 'title');
         $this->assertContains($article['title'], $titles);

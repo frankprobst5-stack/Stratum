@@ -34,7 +34,7 @@ final class ChatApiController extends ApiController
      */
     public function messages(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 
@@ -64,7 +64,7 @@ final class ChatApiController extends ApiController
      */
     public function postMessage(Request $request): Response
     {
-        if (($guard = $this->guard()) !== null) {
+        if (($guard = $this->guard($request)) !== null) {
             return $guard;
         }
 

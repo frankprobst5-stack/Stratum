@@ -76,12 +76,19 @@ final class Auth
     }
 
     /**
-     * Resolves the current user from a session first — a Bearer API
-     * token only ever applies when there's no session at all, so a
-     * browser's own logged-in session always takes precedence over any
-     * stray Authorization header. Every capability check downstream
-     * (`can()`) is identical either way, since both paths converge on the
-     * same $this->user array.
+     * Resolves the current user from a Bearer token first when one is
+     * present on the request, falling back to the session otherwise.
+     * Bearer wins over session (not the reverse) so there is never an
+     * ambiguity about which credential actually authorized a request: a
+     * plain web request never carries an Authorization header, so this
+     * only changes behavior for the one case that matters — a request
+     * carrying both a session cookie and an explicit Bearer token, where
+     * the explicit, deliberately-presented credential should decide, not
+     * whichever one happens to resolve first. Every capability check
+     * downstream (`can()`) is identical either way, since both paths
+     * converge on the same $this->user array. See
+     * core/api/controllers/ApiController.php's guard() docblock and
+     * docs/roadmap.md's Stage 10 security-audit entry.
      *
      * @return array<string, mixed>|null
      */
@@ -92,14 +99,16 @@ final class Auth
         }
 
         $this->resolved = true;
-        $id = $this->session->get('user_id');
-        if ($id !== null) {
-            $this->user = $this->identity->findById((int) $id);
+
+        $fromBearer = $this->userFromBearerToken();
+        if ($fromBearer !== null) {
+            $this->user = $fromBearer;
 
             return $this->user;
         }
 
-        $this->user = $this->userFromBearerToken();
+        $id = $this->session->get('user_id');
+        $this->user = $id !== null ? $this->identity->findById((int) $id) : null;
 
         return $this->user;
     }

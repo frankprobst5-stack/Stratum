@@ -101,9 +101,9 @@ final class ForumApiTest extends TestCase
         $topic = $forum->createTopicWithFirstPost((int) $board['id'], (int) $author['id'], 'API test topic', 'first post');
 
         $replier = $this->createUser();
-        $app = $this->asUser($replier);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($replier);
         $controller = new ForumApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => 'a reply']);
+        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => 'a reply'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $topic['topicId']]);
 
         $response = $controller->reply($request);
@@ -120,9 +120,9 @@ final class ForumApiTest extends TestCase
 
         $replier = $this->createUser();
         $this->grantCapability((int) $replier['id'], 'forum.reply');
-        $app = $this->asUser($replier);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($replier);
         $controller = new ForumApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => 'a real reply']);
+        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => 'a real reply'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $topic['topicId']]);
 
         $response = $controller->reply($request);
@@ -142,9 +142,9 @@ final class ForumApiTest extends TestCase
 
         $replier = $this->createUser();
         $this->grantCapability((int) $replier['id'], 'forum.reply');
-        $app = $this->asUser($replier);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($replier);
         $controller = new ForumApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => 'a reply']);
+        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => 'a reply'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $topic['topicId']]);
 
         $response = $controller->reply($request);
@@ -161,9 +161,9 @@ final class ForumApiTest extends TestCase
 
         $replier = $this->createUser();
         $this->grantCapability((int) $replier['id'], 'forum.reply');
-        $app = $this->asUser($replier);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($replier);
         $controller = new ForumApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => '   ']);
+        $request = $this->makeRequest('POST', '/api/v1/forum/topics/' . $topic['topicId'] . '/reply', body: ['body' => '   '], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['id' => (string) $topic['topicId']]);
 
         $response = $controller->reply($request);

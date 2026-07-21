@@ -90,10 +90,10 @@ final class CommentsApiTest extends TestCase
     {
         $article = $this->createArticle();
         $commenter = $this->createUser();
-        $app = $this->asUser($commenter);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($commenter);
 
         $controller = new CommentsApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/comments/article/' . $article['id'], body: ['body' => 'hello']);
+        $request = $this->makeRequest('POST', '/api/v1/comments/article/' . $article['id'], body: ['body' => 'hello'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => (string) $article['id']]);
 
         $response = $controller->create($request);
@@ -106,10 +106,10 @@ final class CommentsApiTest extends TestCase
         $article = $this->createArticle();
         $commenter = $this->createUser();
         $this->grantCapability((int) $commenter['id'], 'comments.create');
-        $app = $this->asUser($commenter);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($commenter);
 
         $controller = new CommentsApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/comments/article/' . $article['id'], body: ['body' => 'a real reply']);
+        $request = $this->makeRequest('POST', '/api/v1/comments/article/' . $article['id'], body: ['body' => 'a real reply'], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => (string) $article['id']]);
 
         $response = $controller->create($request);
@@ -128,10 +128,10 @@ final class CommentsApiTest extends TestCase
         $article = $this->createArticle();
         $commenter = $this->createUser();
         $this->grantCapability((int) $commenter['id'], 'comments.create');
-        $app = $this->asUser($commenter);
+        ['app' => $app, 'token' => $token] = $this->asApiUser($commenter);
 
         $controller = new CommentsApiController($app);
-        $request = $this->makeRequest('POST', '/api/v1/comments/article/' . $article['id'], body: ['body' => '   ']);
+        $request = $this->makeRequest('POST', '/api/v1/comments/article/' . $article['id'], body: ['body' => '   '], server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $request->setRouteParams(['type' => 'article', 'id' => (string) $article['id']]);
 
         $response = $controller->create($request);

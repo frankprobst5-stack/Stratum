@@ -41,7 +41,7 @@ final class CommentsApiController extends ApiController
      */
     public function create(Request $request): Response
     {
-        if (($guard = $this->guard('comments.create')) !== null) {
+        if (($guard = $this->guard($request, 'comments.create')) !== null) {
             return $guard;
         }
 
