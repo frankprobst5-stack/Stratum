@@ -22,6 +22,7 @@ if (PHP_SAPI !== 'cli') {
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+use Stratum\Core\ApiRateLimiter;
 use Stratum\Core\App;
 use Stratum\Core\Auth;
 use Stratum\Core\BlockRegistry;
@@ -71,6 +72,14 @@ try {
 
     $app = new App($rootDir, $config, $db, $session, $auth, $router, $hooks, $blocks, $templates, $logger, $modules, $permissions);
     $modules->boot($app);
+
+    // Rate-limit window pruning (Stage 10) isn't tied to any one module —
+    // same reasoning dues' own cron.daily listener has, just registered
+    // directly here since ApiRateLimiter is core infrastructure, not a
+    // module with its own Module.php to register from.
+    $hooks->listen('cron.daily', static function () use ($db): void {
+        (new ApiRateLimiter($db))->pruneOldWindows();
+    });
 
     $logger->info('cron.daily starting.');
     $errors = $hooks->fire('cron.daily');

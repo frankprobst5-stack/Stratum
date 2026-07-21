@@ -29,7 +29,10 @@
 
 <h2>Response shape</h2>
 <p>Success: <code>{"data": ...}</code> — list endpoints add <code>"meta": {"page", "per_page", "total"}</code>.</p>
-<p>Errors: <code>{"error": {"message", "code"}}</code> with a matching HTTP status (401 unauthenticated, 403 forbidden, 404 not found, 422 validation, 429 reserved).</p>
+<p>Errors: <code>{"error": {"message", "code"}}</code> with a matching HTTP status (401 unauthenticated, 403 forbidden, 404 not found, 422 validation, 429 rate limited).</p>
+
+<h2>Rate limiting</h2>
+<p>60 requests per minute, per API token (or per IP address for unauthenticated reads). Exceeding it returns <code>429</code> with a <code>Retry-After</code> header.</p>
 
 <h2>Endpoints</h2>
 <div class="strat-list">

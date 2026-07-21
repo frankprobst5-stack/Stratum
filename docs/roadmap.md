@@ -7139,6 +7139,76 @@ security audit.
 
 ---
 
+## Stage 10, Rate Limiting ✅ (SHIPPED 2026-07-20)
+
+**Why**: `ApiResponse` has reserved the 429 error code since the First
+Slice, unenforced — the natural next step now that the public API spans
+seven slices and real write endpoints. Every mutating action across the
+whole API (forum reply, comments, ratings, chat, bookmarks, messages) was
+completely unprotected from being hammered.
+
+**Design**: a fixed one-minute window counter (`api_rate_limits` table —
+`identifier` + `window_start` + `request_count`, `UNIQUE(identifier,
+window_start)`), incremented atomically via `INSERT ... ON DUPLICATE KEY
+UPDATE` rather than read-then-write, so two concurrent requests in the
+same window can't both read the same count and both slip past the limit.
+`identifier` is a Bearer token's SHA-256 hash (the same hash
+`ApiTokenService` already stores — no new place raw tokens are kept) for
+authenticated requests, or the caller's IP for guest reads — checked
+against the *presented* credential rather than a validated one, so a
+garbage/invalid token still gets its own bucket instead of falling back
+to a shared IP bucket. 60 requests/minute by default
+(`API_RATE_LIMIT_PER_MINUTE` in `.env`), `API_RATE_LIMIT_ENABLED` to kill
+the whole check if needed.
+
+**Where it's enforced**: `public/index.php`, right after `Auth` is built
+and before `ModuleManager::boot()` — same "intercept before the rest of
+the pipeline runs" spot maintenance mode and the page cache already use,
+scoped to `/api/v1/*` only (`/api-docs` and every other route
+untouched). A 429 gets `ApiResponse::rateLimited()` plus a new generic
+`Response::withHeader()` method (the first arbitrary-header escape hatch
+on that class — every other header was previously set by a specific
+factory method internally) carrying `Retry-After: 60`.
+
+**Pruning**: `api_rate_limits` has much higher row-churn than
+`login_attempts` (one row per identifier per *minute* of API traffic,
+not just failed logins) — registered a `cron.daily` listener directly in
+`bin/cron.php` (not a module's `Module.php`, since `ApiRateLimiter` is
+core infrastructure with no module of its own) that deletes windows
+older than a day.
+
+**Verification**: `composer test` — 87/87 green (83 prior + 4 new,
+testing `ApiRateLimiter` directly rather than through HTTP, since the
+enforcement itself lives in the front controller which the test suite's
+`TestCase` deliberately bypasses — same reasoning CSRF/page-cache/
+maintenance-mode checks are already untested at that layer). `php -l`
+clean. Started the real dev server and actually tripped it: fired 65
+rapid requests at `/api/v1/articles` from the same IP — the first 60
+succeeded, 61 through 65 came back `429` with the exact expected JSON
+body and a `Retry-After: 60` header. Confirmed the real DB row
+(`ip:127.0.0.1`, count 66 after one more verification hit) and confirmed
+non-`/api/v1/` routes (`/`, `/api-docs`) were completely unaffected.
+Minted a real API token as `modtest_member` and confirmed a
+token-authenticated request succeeded even while that same IP's guest
+bucket was still tripped — proving the two bucket types are genuinely
+independent, not the same counter in disguise. Ran `bin/cron.php` for
+real and confirmed the prune left same-day rows untouched (correct — it
+only removes rows older than 24 hours, and no test row was actually that
+old). All test rows and the throwaway token deleted afterward, confirmed
+via direct query; limit confirmed reset to normal (200) immediately
+after. `/api-docs` updated with a new "Rate limiting" section and the
+429 status line changed from "reserved" to real. Dev server stopped
+clean.
+
+**Deliberately not built**: per-route limits (one global counter across
+all of `/api/v1/*` per identifier, not a separate bucket per endpoint) —
+simpler to reason about and sufficient for this app's actual traffic
+scale; per-route limits are easy to layer on later if one specific
+endpoint needs a tighter cap. Remaining Stage 10 items: GraphQL, CI/CD,
+container deployment, and the security audit.
+
+---
+
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
 required now" per the original vision notes).
 

@@ -118,6 +118,31 @@ $request = Request::fromGlobals();
 require_once $rootDir . '/core/modules/users/services/AuthService.php';
 $auth = new Auth($session, $db, new AuthService($db), $permissions, $request, new ApiTokenService($db));
 
+// REST API rate limiting (Stage 10) — checked here, before
+// ModuleManager::boot(), so a rejected request skips the same amount of
+// pipeline the maintenance-mode check below already skips. Scoped to
+// /api/v1/* only; /api-docs and every other route is unaffected.
+// Identifier is a Bearer token's hash (the same SHA-256
+// ApiTokenService::createToken() already stores — never a new place raw
+// tokens are kept) when one's presented, else the caller's IP for guest
+// reads. Rate limiting by the presented credential rather than first
+// validating it via Auth keeps this check cheap and independent of
+// Auth's own resolution path — an invalid/garbage token still gets its
+// own bucket rather than falling back to a shared IP bucket.
+$apiPath = rtrim($request->path(), '/') ?: '/';
+if ($config->getBool('API_RATE_LIMIT_ENABLED', true) && str_starts_with($apiPath, '/api/v1/')) {
+    $authHeader = $request->server('HTTP_AUTHORIZATION') ?? '';
+    $rateLimitIdentifier = str_starts_with($authHeader, 'Bearer ')
+        ? 'token:' . hash('sha256', trim(substr($authHeader, 7)))
+        : 'ip:' . $request->ip();
+
+    $rateLimiter = new \Stratum\Core\ApiRateLimiter($db);
+    if ($rateLimiter->tooManyRequests($rateLimitIdentifier, $config->getInt('API_RATE_LIMIT_PER_MINUTE', 60))) {
+        \Stratum\Api\ApiResponse::rateLimited()->withHeader('Retry-After', '60')->send();
+        exit;
+    }
+}
+
 // Full-page cache — checked here, before ModuleManager::boot(), so a
 // hit skips essentially the entire request pipeline (module loading,
 // routing, controller logic, DB content queries, template rendering),

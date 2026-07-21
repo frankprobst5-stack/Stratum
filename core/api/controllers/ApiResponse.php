@@ -50,4 +50,10 @@ final class ApiResponse
     {
         return self::error('Not found.', 404, 'not_found');
     }
+
+    /** Stage 10 rate limiting — see ApiRateLimiter. Caller is expected to chain ->withHeader('Retry-After', ...). */
+    public static function rateLimited(): Response
+    {
+        return self::error('Too many requests. Please slow down.', 429, 'rate_limited');
+    }
 }

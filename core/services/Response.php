@@ -156,6 +156,14 @@ final class Response
         return $this->headers;
     }
 
+    /** Fluent — sets an arbitrary response header, e.g. `Retry-After` on a 429. Every other header on this class is set internally by a specific factory; this is the generic escape hatch for the rest. */
+    public function withHeader(string $name, string $value): self
+    {
+        $this->headers[$name] = $value;
+
+        return $this;
+    }
+
     public function send(): void
     {
         http_response_code($this->status);
