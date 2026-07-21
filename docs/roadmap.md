@@ -7209,6 +7209,71 @@ container deployment, and the security audit.
 
 ---
 
+## Stage 10, CI/CD ✅ (SHIPPED 2026-07-20)
+
+**Why**: the test suite (87 tests as of the previous entry) only
+protected against regressions if someone remembered to run
+`composer test` by hand before every change — the same gap any project
+has before its tests are wired into the thing that actually gates merges.
+GitHub Actions was the obvious choice since the repo already lives there.
+
+**`.github/workflows/ci.yml`, two jobs**:
+- **`lint`** — `php -l` across every git-tracked `.php` file (`git ls-files
+  '*.php' | xargs -n1 php -l`, not a raw `find`, so it can never pick up
+  a gitignored local scratch file the way an earlier ad-hoc local sweep
+  briefly did — see Verification below).
+- **`test`** — a real `mysql:8.0` **service container** (GitHub Actions'
+  own term for a sidecar container the job can talk to on `127.0.0.1`),
+  the identical image `docker-compose.test.yml` already uses for local
+  dev, so CI and local runs exercise the same migration path rather than
+  a CI-only shortcut like SQLite. Writes a `.env.testing` pointing at the
+  service container's exposed port, then `composer install` +
+  `composer test`. Triggers on every push and PR to `main`.
+
+**PHP 8.2, deliberately not matching local dev's 8.5** — composer.json's
+stated floor (`"php": ">=8.2"`) is what actually matters: testing against
+the minimum supported version catches accidental use of newer syntax a
+club's actual shared host (likely running something older than
+whatever's on this dev machine) would choke on. Local dev staying on
+whatever's newest is fine; CI is where the floor gets enforced.
+
+**A real local-simulation dead end, not a bug in the recipe**: before
+trusting the workflow to GitHub, tried to replicate it locally with an
+ad-hoc `docker run -p 3308:3306 mysql:8.0` container — the raw `mysql`
+CLI and PHP's `PDO` both failed identically with a connection-level
+"reading initial communication packet" error from the *host*, while
+`docker exec ... mysqladmin ping` succeeded from *inside* the same
+container the whole time. Since the project's own `docker-compose.test.yml`
+on port 3307 has worked reliably all session, this pointed at something
+specific to this sandbox's Docker networking on an ad-hoc port mapping,
+not a real problem with the GitHub Actions `services:` pattern (an
+extremely standard, widely-used approach, not something invented here).
+Rather than keep fighting a local artifact that couldn't actually prove
+anything about GitHub's own infrastructure anyway, restored `.env.testing`
+to the known-working local container, reconfirmed 87/87 green there, and
+pushed the workflow to get the authoritative answer from the real target
+environment instead.
+
+**Verification**: pushed, then polled the GitHub Actions API
+(`GET /repos/.../actions/runs`) directly — no `gh` CLI available in this
+environment — until the run completed. **Both jobs green on the first
+real run**: `lint` and `test` (mysql service container start →
+`composer install` → migrations → full suite) all reported `success`,
+confirming the `services:` container pattern works exactly as documented
+on GitHub's actual infrastructure, unaffected by whatever was specific to
+the earlier local sandbox networking issue. Added a live CI status badge
+to `README.md`, linked to the workflow.
+
+**Deliberately not built**: a matrix across multiple PHP versions (8.2
+alone is the meaningful floor to test; adding 8.3/8.4 is low-value for a
+project with no library-consumer compatibility surface). Deploy-on-green
+automation — there's no real deployment target yet (each club
+self-installs on their own unknown shared host), so there's nothing to
+deploy *to*. Remaining Stage 10 items: GraphQL, container deployment,
+and the security audit.
+
+---
+
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
 required now" per the original vision notes).
 

@@ -1,5 +1,7 @@
 # Stratum CMS
 
+[![CI](https://github.com/frankprobst5-stack/Stratum/actions/workflows/ci.yml/badge.svg)](https://github.com/frankprobst5-stack/Stratum/actions/workflows/ci.yml)
+
 A modular, community-first portal platform for clubs, associations, and
 member-driven organizations — forums, wiki, articles, calendar, gallery,
 downloads, chat, classifieds, dues, donations, advertising, and more, all
