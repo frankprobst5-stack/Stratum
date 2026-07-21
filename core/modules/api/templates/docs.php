@@ -65,6 +65,12 @@
         ['GET', '/api/v1/messages/conversations/{id}', 'One conversation and its messages — requires a Bearer token and participation, marks it read'],
         ['POST', '/api/v1/messages/conversations/{id}/reply', 'Reply in an existing conversation — requires a Bearer token and participation'],
         ['POST', '/api/v1/messages/start', 'Start a new conversation by username — requires a Bearer token'],
+        ['GET', '/api/v1/commerce/products', 'List active products (paginated)'],
+        ['GET', '/api/v1/commerce/products/{id}', 'One product — reads only, no purchase endpoint; buying stays on the web'],
+        ['GET', '/api/v1/dues/plans', 'List active dues plans (paginated)'],
+        ['GET', '/api/v1/dues/plans/{id}', 'One plan — reads only, no payment endpoint; paying stays on the web'],
+        ['GET', '/api/v1/donations/campaigns', 'List active donation campaigns with amount raised (paginated)'],
+        ['GET', '/api/v1/donations/campaigns/{id}', 'One campaign — reads only, no contribution endpoint; giving stays on the web'],
     ];
     ?>
     <?php foreach ($endpoints as [$method, $path, $desc]): ?>

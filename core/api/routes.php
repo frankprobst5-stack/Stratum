@@ -8,7 +8,10 @@ use Stratum\Api\BookmarksApiController;
 use Stratum\Api\CalendarApiController;
 use Stratum\Api\ChatApiController;
 use Stratum\Api\CommentsApiController;
+use Stratum\Api\CommerceApiController;
+use Stratum\Api\DonationsApiController;
 use Stratum\Api\DownloadsApiController;
+use Stratum\Api\DuesApiController;
 use Stratum\Api\ForumApiController;
 use Stratum\Api\GalleryApiController;
 use Stratum\Api\MessagesApiController;
@@ -100,6 +103,23 @@ $router->get('/api/v1/messages/conversations', [$messages, 'conversations']);
 $router->get('/api/v1/messages/conversations/{id}', [$messages, 'show']);
 $router->post('/api/v1/messages/conversations/{id}/reply', [$messages, 'reply']);
 $router->post('/api/v1/messages/start', [$messages, 'start']);
+
+// Stage 10, seventh API slice — commerce, dues, donations. Reads only,
+// confirmed 2026-07-20: all three touch real money (Cash App, manual
+// admin confirm), so initiating a purchase/payment/pledge stays web-only
+// through the existing flow rather than opening a new payment code path
+// through the API.
+$commerce = new CommerceApiController($app);
+$router->get('/api/v1/commerce/products', [$commerce, 'index']);
+$router->get('/api/v1/commerce/products/{id}', [$commerce, 'show']);
+
+$dues = new DuesApiController($app);
+$router->get('/api/v1/dues/plans', [$dues, 'index']);
+$router->get('/api/v1/dues/plans/{id}', [$dues, 'show']);
+
+$donations = new DonationsApiController($app);
+$router->get('/api/v1/donations/campaigns', [$donations, 'index']);
+$router->get('/api/v1/donations/campaigns/{id}', [$donations, 'show']);
 
 $router->get('/api-docs', static function (\Stratum\Core\Request $request) use ($app): \Stratum\Core\Response {
     $content = $app->templates->render('api', 'docs', ['baseUrl' => $request->baseUrl()]);

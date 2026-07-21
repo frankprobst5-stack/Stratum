@@ -7095,6 +7095,50 @@ Stage 10 items.
 
 ---
 
+## Stage 10, Seventh Slice: Commerce/Dues/Donations, Reads Only ✅ (SHIPPED 2026-07-20)
+
+**Why**: the last three unbuilt content modules, and the one place in
+this whole API where the answer wasn't obvious enough to just build —
+asked first. Confirmed: reads only, no payment-initiating endpoint on
+any of the three. Browsing products/plans/campaigns via the API is
+useful (a future mobile app showing "what's for sale" or "what do I
+owe"); *starting* a purchase, dues payment, or donation pledge stays
+web-only through the existing Cash App flow — no new code path that
+touches money.
+
+**Endpoints**: `GET /api/v1/commerce/products` (+ `/{id}`, includes
+`hasPurchased`: `null` for a guest, a real `true`/`false` once
+authenticated — same three-state pattern `ratings.myRating` established),
+`GET /api/v1/dues/plans` (+ `/{id}`, same pattern with `isCurrent`), `GET
+/api/v1/donations/campaigns` (+ `/{id}`, includes the live `raised`
+amount via `DonationService::raisedAmount()`, matching what
+`DonationController::index()` already computes for the web page). Every
+controller carries an explicit docblock stating the reads-only scope and
+pointing at this slice, so a future session doesn't accidentally add a
+purchase-initiating endpoint without the same check-in.
+
+**Verification**: `composer test` — 83/83 green (72 prior + 11 new).
+`php -l` clean. Started the real dev server and confirmed against real
+seeded data: a real dues plan ("Annual Membership," $50/annual) and a
+real donation campaign ("New Clubhouse Roof Fund," $275 of $2000
+raised) both returned correctly with full field data; commerce had zero
+real products in this dev DB, correctly returning an empty list rather
+than erroring. Confirmed the guest/authenticated distinction on
+`isCurrent` (`null` unauthenticated). No test data to clean up — every
+verification here was a read against existing data or fixtures deleted
+within the test suite itself, nothing written to the dev DB live. Dev
+server stopped clean.
+
+**This closes out per-module API coverage for Stage 10** — every content
+module in the app now has at least read access through the API (11
+modules across seven slices), with write endpoints where the underlying
+action doesn't touch payment (forum reply, comments, ratings, chat,
+bookmarks, messages) and deliberately not where it does. Remaining Stage
+10 items: rate limiting, GraphQL, CI/CD, container deployment, and the
+security audit.
+
+---
+
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
 required now" per the original vision notes).
 
