@@ -7002,6 +7002,49 @@ open Stage 10 items.
 
 ---
 
+## Stage 10, Fifth Slice: API Coverage for Chat ✅ (SHIPPED 2026-07-20)
+
+**Why**: chat next, on its own — the one module in this whole API where
+the read endpoint isn't guest-visible on the web either (`ChatController::
+room()` requires login to view a room at all, unlike every other content
+type covered so far), so it earned its own slice rather than folding into
+a "read-heavy modules" batch.
+
+**Endpoints**: `GET /api/v1/chat/rooms` (public room discovery, the one
+guest-visible piece — mirrors `ChatController::index()`), `GET
+/api/v1/chat/rooms/{id}/messages` (Bearer token required; a private
+room 403s a non-member; **viewing a public room auto-joins the caller**,
+a real side effect on a `GET` request, not an API-only shortcut — this
+mirrors `ChatController::room()`'s exact behavior, since "viewing a
+public room joins you" is the app's actual business rule, not a web-only
+convenience), `POST /api/v1/chat/rooms/{id}/messages` (Bearer token +
+room membership required, mirrors `ChatController::postMessage()`'s exact
+membership check and empty-message rejection).
+
+**Verification**: `composer test` — 58/58 green (49 prior + 9 new). `php
+-l` clean. Started the real dev server, created a real public chat room
+through the actual `/chat` page as `modtest_member`, minted a real API
+token, and confirmed the full flow live: posting a message succeeded
+(201) and was immediately visible on a follow-up read; then logged in as
+a second real account (`modtest_outsider`) that had never touched the
+room, minted a second token, called the messages endpoint, and watched
+`member_count` on the room-list endpoint go from 1 to 2 in response to
+that single `GET` — the auto-join side effect confirmed against real
+data, not just asserted in a test. All test data (room, messages,
+memberships, both throwaway tokens) deleted afterward, confirmed via
+direct query. `/api-docs` updated with the three new rows, including a
+correction to its own "reads are public" line now that chat's read
+endpoint is the one exception. Dev server stopped clean.
+
+**Deliberately not built in this slice**: endpoints for messages
+(private DMs — needs its own design pass, since "your own conversations"
+is a different access shape than anything covered so far, not just
+another guard check), commerce, dues, donations, bookmarks. Rate
+limiting, GraphQL, CI/CD, container deployment, and the security audit
+all remain open Stage 10 items.
+
+---
+
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
 required now" per the original vision notes).
 

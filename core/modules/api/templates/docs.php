@@ -25,7 +25,7 @@
     then send it as a Bearer token on every request:
 </p>
 <pre style="background:var(--strat-card-bg); border:1px solid var(--strat-card-border); border-radius:var(--strat-radius-sm); padding:0.75rem; overflow-x:auto;">curl -H "Authorization: Bearer strat_&lt;your token&gt;" <?= e($baseUrl) ?>/api/v1/forum/boards</pre>
-<p class="strat-muted">Read endpoints below are public and need no token at all — the same content anyone can already see on the site. Only the <code>POST</code> endpoints (marked below) require one.</p>
+<p class="strat-muted">Most read endpoints below are public and need no token at all — the same content anyone can already see on the site. Every <code>POST</code> endpoint requires one, and so does viewing chat messages (chat has no guest-visible view on the web either).</p>
 
 <h2>Response shape</h2>
 <p>Success: <code>{"data": ...}</code> — list endpoints add <code>"meta": {"page", "per_page", "total"}</code>.</p>
@@ -56,6 +56,9 @@
         ['GET', '/api/v1/ratings/{type}/{id}', 'Rating summary + your own rating if authenticated — type is article/download'],
         ['POST', '/api/v1/ratings/{type}/{id}', 'Rate 1-5 — requires a Bearer token'],
         ['GET', '/api/v1/activity', 'Site-wide recent activity feed (fixed-size, not paginated)'],
+        ['GET', '/api/v1/chat/rooms', 'Public chat room list (paginated)'],
+        ['GET', '/api/v1/chat/rooms/{id}/messages', 'Recent messages in a room — requires a Bearer token, auto-joins a public room on view'],
+        ['POST', '/api/v1/chat/rooms/{id}/messages', 'Post a message — requires a Bearer token and room membership'],
     ];
     ?>
     <?php foreach ($endpoints as [$method, $path, $desc]): ?>

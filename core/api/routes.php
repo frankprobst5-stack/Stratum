@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Stratum\Api\ActivityApiController;
 use Stratum\Api\ArticlesApiController;
 use Stratum\Api\CalendarApiController;
+use Stratum\Api\ChatApiController;
 use Stratum\Api\CommentsApiController;
 use Stratum\Api\DownloadsApiController;
 use Stratum\Api\ForumApiController;
@@ -73,6 +74,15 @@ $router->post('/api/v1/ratings/{type}/{id}', [$ratings, 'rate']);
 
 $activity = new ActivityApiController($app);
 $router->get('/api/v1/activity', [$activity, 'index']);
+
+// Stage 10, fifth API slice — chat. Unlike every other read endpoint in
+// this API, viewing messages needs a Bearer token (chat has no
+// guest-visible view, only room discovery does) — see
+// ChatApiController::messages()'s own docblock for why.
+$chat = new ChatApiController($app);
+$router->get('/api/v1/chat/rooms', [$chat, 'rooms']);
+$router->get('/api/v1/chat/rooms/{id}/messages', [$chat, 'messages']);
+$router->post('/api/v1/chat/rooms/{id}/messages', [$chat, 'postMessage']);
 
 $router->get('/api-docs', static function (\Stratum\Core\Request $request) use ($app): \Stratum\Core\Response {
     $content = $app->templates->render('api', 'docs', ['baseUrl' => $request->baseUrl()]);
