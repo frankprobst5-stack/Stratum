@@ -7045,6 +7045,56 @@ all remain open Stage 10 items.
 
 ---
 
+## Stage 10, Sixth Slice: API Coverage for Bookmarks & Direct Messages ✅ (SHIPPED 2026-07-20)
+
+**Why**: the two fully private resources — nothing in either is
+guest-visible on the web, and every response is scoped to the caller's
+own data, not "the site's data with an auth wrapper" the way earlier
+slices worked. Bookmarks was the easy half (a private save-for-later
+list, toggle semantics); messages was the one flagged in the Fifth
+Slice as needing its own design pass, since "your own conversations"
+means every action needs a participant check, not just a login check.
+
+**Bookmarks** (`GET /api/v1/bookmarks`, `POST /api/v1/bookmarks/{type}/{id}`)
+mirrors `BookmarkController::toggle()` exactly: the same
+`bookmarkable_type` allowlist (`article`/`wiki_page`/`forum_topic`), and
+the same "confirm the target still resolves via `ContentResolver` before
+writing a row" guard, so a bookmark can't be created pointing at
+something deleted or never-existed.
+
+**Messages** (`GET /api/v1/messages/conversations`, `GET
+.../conversations/{id}`, `POST .../conversations/{id}/reply`, `POST
+/api/v1/messages/start`) mirrors all four `MessagesController` actions —
+`isParticipant()` gates every single one, viewing a conversation marks
+it read as a side effect of the `GET` (same "real side effect on a read"
+precedent chat's auto-join established), and `start` replicates the
+exact username-resolution, self-message rejection, and `notify()` call.
+
+**Verification**: `composer test` — 72/72 green (58 prior + 14 new).
+`php -l` clean. Started the real dev server: confirmed 401 on every
+endpoint with no token, then as real `modtest_member`, toggled a
+bookmark on a real article (it turned out to already be bookmarked from
+earlier real use of the account — toggled it back to restore that state
+exactly rather than leave a side effect), confirmed the bookmarks index
+listed real existing bookmarks (a forum topic, a wiki page). Started a
+real conversation with `modtest_admin` via `/api/v1/messages/start`,
+replied to it, confirmed `unreadCount` tracked correctly and dropped to
+0 after a `GET` marked it read — then, as a third real account
+(`modtest_outsider`) with no connection to that conversation, confirmed
+a direct 403 on trying to view it. All test data (the conversation, its
+messages, both throwaway tokens) deleted afterward, confirmed via direct
+query; the bookmark was left exactly as found. `/api-docs` updated with
+the six new rows. Dev server stopped clean.
+
+**Deliberately not built in this slice**: endpoints for commerce, dues,
+donations — all three touch real payment flows (Cash App, manual admin
+confirm), which deserves a check-in on scope before building write
+endpoints around money, not an assumption. Rate limiting, GraphQL,
+CI/CD, container deployment, and the security audit all remain open
+Stage 10 items.
+
+---
+
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
 required now" per the original vision notes).
 

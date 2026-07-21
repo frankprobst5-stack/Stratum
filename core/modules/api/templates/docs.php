@@ -25,7 +25,7 @@
     then send it as a Bearer token on every request:
 </p>
 <pre style="background:var(--strat-card-bg); border:1px solid var(--strat-card-border); border-radius:var(--strat-radius-sm); padding:0.75rem; overflow-x:auto;">curl -H "Authorization: Bearer strat_&lt;your token&gt;" <?= e($baseUrl) ?>/api/v1/forum/boards</pre>
-<p class="strat-muted">Most read endpoints below are public and need no token at all — the same content anyone can already see on the site. Every <code>POST</code> endpoint requires one, and so does viewing chat messages (chat has no guest-visible view on the web either).</p>
+<p class="strat-muted">Most read endpoints below are public and need no token at all — the same content anyone can already see on the site. Every <code>POST</code> endpoint requires one, and so do the fully private resources (chat messages, bookmarks, direct messages) — those have no guest-visible view on the web either.</p>
 
 <h2>Response shape</h2>
 <p>Success: <code>{"data": ...}</code> — list endpoints add <code>"meta": {"page", "per_page", "total"}</code>.</p>
@@ -59,6 +59,12 @@
         ['GET', '/api/v1/chat/rooms', 'Public chat room list (paginated)'],
         ['GET', '/api/v1/chat/rooms/{id}/messages', 'Recent messages in a room — requires a Bearer token, auto-joins a public room on view'],
         ['POST', '/api/v1/chat/rooms/{id}/messages', 'Post a message — requires a Bearer token and room membership'],
+        ['GET', '/api/v1/bookmarks', 'Your own saved items (paginated) — requires a Bearer token'],
+        ['POST', '/api/v1/bookmarks/{type}/{id}', 'Toggle a bookmark — requires a Bearer token; type is article/wiki_page/forum_topic'],
+        ['GET', '/api/v1/messages/conversations', 'Your own conversations (paginated) — requires a Bearer token'],
+        ['GET', '/api/v1/messages/conversations/{id}', 'One conversation and its messages — requires a Bearer token and participation, marks it read'],
+        ['POST', '/api/v1/messages/conversations/{id}/reply', 'Reply in an existing conversation — requires a Bearer token and participation'],
+        ['POST', '/api/v1/messages/start', 'Start a new conversation by username — requires a Bearer token'],
     ];
     ?>
     <?php foreach ($endpoints as [$method, $path, $desc]): ?>

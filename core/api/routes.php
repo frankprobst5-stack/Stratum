@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Stratum\Api\ActivityApiController;
 use Stratum\Api\ArticlesApiController;
+use Stratum\Api\BookmarksApiController;
 use Stratum\Api\CalendarApiController;
 use Stratum\Api\ChatApiController;
 use Stratum\Api\CommentsApiController;
 use Stratum\Api\DownloadsApiController;
 use Stratum\Api\ForumApiController;
 use Stratum\Api\GalleryApiController;
+use Stratum\Api\MessagesApiController;
 use Stratum\Api\RatingsApiController;
 use Stratum\Api\TagsApiController;
 use Stratum\Api\WikiApiController;
@@ -83,6 +85,21 @@ $chat = new ChatApiController($app);
 $router->get('/api/v1/chat/rooms', [$chat, 'rooms']);
 $router->get('/api/v1/chat/rooms/{id}/messages', [$chat, 'messages']);
 $router->post('/api/v1/chat/rooms/{id}/messages', [$chat, 'postMessage']);
+
+// Stage 10, sixth API slice — the two fully private resources: bookmarks
+// (a user's own saved items) and direct messages (a user's own
+// conversations). Every action here requires a Bearer token and is scoped
+// to the caller; there is no public read path on either resource, unlike
+// every earlier slice.
+$bookmarks = new BookmarksApiController($app);
+$router->get('/api/v1/bookmarks', [$bookmarks, 'index']);
+$router->post('/api/v1/bookmarks/{type}/{id}', [$bookmarks, 'toggle']);
+
+$messages = new MessagesApiController($app);
+$router->get('/api/v1/messages/conversations', [$messages, 'conversations']);
+$router->get('/api/v1/messages/conversations/{id}', [$messages, 'show']);
+$router->post('/api/v1/messages/conversations/{id}/reply', [$messages, 'reply']);
+$router->post('/api/v1/messages/start', [$messages, 'start']);
 
 $router->get('/api-docs', static function (\Stratum\Core\Request $request) use ($app): \Stratum\Core\Response {
     $content = $app->templates->render('api', 'docs', ['baseUrl' => $request->baseUrl()]);
