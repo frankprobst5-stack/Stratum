@@ -6948,6 +6948,60 @@ security audit all remain open Stage 10 items.
 
 ---
 
+## Stage 10, Fourth Slice: API Coverage for Tags/Comments/Ratings/Activity ✅ (SHIPPED 2026-07-20)
+
+**Why**: cross-content features next, rather than another whole module —
+tags, comments, and ratings all span multiple content types already
+covered (articles, wiki, video, gallery, calendar, downloads), and the
+site-wide activity feed ties them together. Two new write endpoints this
+slice (comment create, rating create) — both direct mirrors of
+`CommentsController::create()`/`RatingsController::rate()`'s exact logic
+(same capability checks, same type allowlists, same notify() behavior),
+proving the write-endpoint pattern generalizes past forum reply.
+
+**Endpoints**: `GET /api/v1/tags` (+ `/{slug}` — one tag and the content
+tagged with it, via the existing `ContentResolver`), `GET/POST
+/api/v1/comments/{type}/{id}` (type restricted to `article`/`video`/
+`gallery_photo`/`calendar_event`/`wiki_page`, matching
+`CommentsController::resolveOwner()`'s own map), `GET/POST
+/api/v1/ratings/{type}/{id}` (type restricted to `article`/`download`,
+matching `RatingsController::ALLOWED_TYPES`), `GET /api/v1/activity`
+(wraps `ActivityService::recent()` as-is — a fixed 40-item live snapshot,
+not paginated, same shape the site-wide feed itself already has).
+
+**A real gap in the service layer, worked around rather than widened**:
+`CommentService::create()` returns `void`, not the new row's id — unlike
+`ForumService::reply()`, which returns a `postId` the First Slice's
+`ForumApiController::reply()` used to echo back the created post. Rather
+than changing a shared service's signature for the API's convenience, the
+create endpoint returns the echoed input (`commentable_type`,
+`commentable_id`, `body`) as its `201` payload instead of a freshly
+re-queried row — honest about what was actually returned, no extra DB
+round-trip invented just to synthesize a "real" response object.
+
+**Verification**: `composer test` — 49/49 green (33 prior + 16 new).
+`php -l` clean. Started the real dev server and exercised the full
+guard chain against real production data: unauthenticated comment/rating
+writes correctly 401, an unknown `type` segment correctly 422 on both
+`GET` and `POST` for both resources. Logged in as the real `modtest_member`
+account, minted a real API token through the actual `/profile` page (same
+flow the First Slice proved), and posted a real comment + real rating
+against a real published article — both succeeded (201 and 200), both
+immediately visible on a follow-up `GET`, and the guest-vs-authenticated
+distinction on `myRating` (null for an anonymous read, the real score once
+authenticated) confirmed correctly. All test data (comment row, rating
+row, the throwaway API token) deleted afterward, confirmed via direct
+query. `/api-docs` updated with the seven new rows. Dev server stopped
+clean.
+
+**Deliberately not built in this slice**: endpoints for chat, messages,
+commerce, dues, donations, bookmarks — same slice-by-slice discipline,
+now four slices deep into the same proven pattern. Rate limiting,
+GraphQL, CI/CD, container deployment, and the security audit all remain
+open Stage 10 items.
+
+---
+
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
 required now" per the original vision notes).
 

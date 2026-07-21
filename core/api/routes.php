@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use Stratum\Api\ActivityApiController;
 use Stratum\Api\ArticlesApiController;
 use Stratum\Api\CalendarApiController;
+use Stratum\Api\CommentsApiController;
 use Stratum\Api\DownloadsApiController;
 use Stratum\Api\ForumApiController;
 use Stratum\Api\GalleryApiController;
+use Stratum\Api\RatingsApiController;
+use Stratum\Api\TagsApiController;
 use Stratum\Api\WikiApiController;
 
 /**
@@ -50,6 +54,25 @@ $router->get('/api/v1/downloads/{id}', [$downloads, 'show']);
 $gallery = new GalleryApiController($app);
 $router->get('/api/v1/gallery/albums', [$gallery, 'albums']);
 $router->get('/api/v1/gallery/albums/{id}/photos', [$gallery, 'photos']);
+
+// Stage 10, fourth API slice — cross-content features (tags, comments,
+// ratings, activity) rather than another whole module. Two new write
+// endpoints this slice (comment create, rating create), both direct
+// mirrors of their existing web controllers' exact logic.
+$tags = new TagsApiController($app);
+$router->get('/api/v1/tags', [$tags, 'index']);
+$router->get('/api/v1/tags/{slug}', [$tags, 'show']);
+
+$comments = new CommentsApiController($app);
+$router->get('/api/v1/comments/{type}/{id}', [$comments, 'index']);
+$router->post('/api/v1/comments/{type}/{id}', [$comments, 'create']);
+
+$ratings = new RatingsApiController($app);
+$router->get('/api/v1/ratings/{type}/{id}', [$ratings, 'show']);
+$router->post('/api/v1/ratings/{type}/{id}', [$ratings, 'rate']);
+
+$activity = new ActivityApiController($app);
+$router->get('/api/v1/activity', [$activity, 'index']);
 
 $router->get('/api-docs', static function (\Stratum\Core\Request $request) use ($app): \Stratum\Core\Response {
     $content = $app->templates->render('api', 'docs', ['baseUrl' => $request->baseUrl()]);
