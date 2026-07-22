@@ -7638,6 +7638,55 @@ per-module content" sequencing already set. The old `.site-topbar`/
 than deleted mid-migration — a full sweep for orphaned rules is cleanup
 for once the whole rewrite is done, not a piecemeal task now.
 
+## CSS Integration, Third Slice: Front-Page Block Cards (2026-07-21)
+
+**Why**: the homepage is the highest-visibility page on the whole site
+and maps directly to the user's own mockups — but rather than needing
+15 separate block-class edits, `BlockRegistry::wrapCard()`
+(`core/services/BlockRegistry.php`) turned out to already be the single
+place every card-wrapped front-page block's outer shell gets rendered
+(a 2026-07-19 design decision specifically so this kind of change never
+needs touching each block individually). One method edit, zero block
+class changes, all 15 blocks (Recent Forum Posts, Upcoming Events,
+Newest Members, Latest Comments, Downloads List, Gallery Highlights,
+Recent Videos, Featured Club, Site Statistics, Welcome/Join CTA, Quick
+Links, Online Users, Recent Activity) restyled at once.
+
+**What changed**: `.strat-block-card`/`.strat-card-header`/
+`.strat-icon-badge`/`.strat-card-cta` → `.sc-card`/`.sc-card-header`/
+`.sc-card-icon-badge`/`.sc-card-cta`. The "View All" CTA moved from a
+full-width footer button into the header row itself, next to the
+icon+title — matches the design reference, and reuses `.sc-card-header`'s
+existing `justify-content: space-between` unmodified (same two-group
+layout already proven in the admin dashboard and public header slices).
+The icon badge is new-to-`dashboard.css` but not a new idea — it directly
+reuses `theme.css`'s existing 8-color accent system
+(blue/green/orange/purple/gold/teal/red/cyan via `color-mix()`) through
+the shared `--strat-color-*` variables, rather than duplicating a second
+palette. `CardBlock` itself (`cardTitle()`/`cardIcon()`/`cardAccent()`/
+`viewAllUrl()`) is completely unchanged — this was purely a rendering-
+shell restyle.
+
+**Verification**: live on the homepage as both guest and a logged-in
+member. Confirmed via `preview_inspect` computed styles: real shadow and
+white background on cards, `color-mix()` correctly resolving the teal
+accent to an 18%-opacity tint. Confirmed via raw HTML: all 15 block
+types present with correct per-block icon/accent/title, CTA links
+correctly present only where `viewAllUrl()` returns non-null (absent on
+Recent Comments, Quick Links — matching their real `CardBlock`
+implementations, not a rendering bug). Full suite green (90 tests, 159
+assertions), full `php -l` sweep clean.
+
+**Deliberately not done in this slice**: the hero row (`front_hero_main`/
+`front_hero_side`) and the surrounding grid (`.strat-front-hero`,
+`.strat-front-columns`) — neither is card-wrapped, both still render
+through their own existing `theme.css` styling untouched. Also not
+touched: the *inside* of each block's own `render()` output (list rows,
+inline styles) — this slice was scoped to the shared card shell only,
+the highest-leverage single change available; per-block internal markup
+is real future work, same incremental sequencing as everything else in
+this rewrite.
+
 ---
 
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not

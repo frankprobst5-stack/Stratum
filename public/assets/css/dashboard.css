@@ -183,7 +183,31 @@ body.sc-dark-theme {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--sc-border-light);
 }
-.sc-card-title { font-size: 1.05rem; font-weight: 700; color: var(--sc-text-primary); }
+.sc-card-title { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; font-weight: 700; color: var(--sc-text-primary); }
+.sc-card-cta { font-size: 0.8rem; font-weight: 600; color: var(--sc-primary); text-decoration: none; flex-shrink: 0; }
+.sc-card-cta:hover { color: var(--sc-primary-hover); }
+
+/*
+ * Front-page block card icon badge — same 8-color accent system
+ * theme.css's .strat-icon-badge already established (docs/design-
+ * system.md), reused via the shared --strat-color-* variables rather
+ * than duplicating the palette; BlockRegistry::wrapCard() emits this for
+ * any block implementing CardBlock. Every front-page block (15 classes)
+ * gets this for free — the card shell is rendered in exactly one place,
+ * never hand-written per block.
+ */
+.sc-card-icon-badge {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 2rem; height: 2rem; border-radius: var(--sc-radius-sm); font-size: 1.05rem; line-height: 1;
+}
+.sc-card-icon-badge[data-accent="blue"] { background: color-mix(in srgb, var(--strat-color-blue) 18%, transparent); }
+.sc-card-icon-badge[data-accent="green"] { background: color-mix(in srgb, var(--strat-color-green) 18%, transparent); }
+.sc-card-icon-badge[data-accent="orange"] { background: color-mix(in srgb, var(--strat-color-orange) 18%, transparent); }
+.sc-card-icon-badge[data-accent="purple"] { background: color-mix(in srgb, var(--strat-color-purple) 18%, transparent); }
+.sc-card-icon-badge[data-accent="gold"] { background: color-mix(in srgb, var(--strat-color-gold) 18%, transparent); }
+.sc-card-icon-badge[data-accent="teal"] { background: color-mix(in srgb, var(--strat-color-teal) 18%, transparent); }
+.sc-card-icon-badge[data-accent="red"] { background: color-mix(in srgb, var(--strat-color-red) 18%, transparent); }
+.sc-card-icon-badge[data-accent="cyan"] { background: color-mix(in srgb, var(--strat-color-cyan) 18%, transparent); }
 
 /* ---------- components / buttons ---------- */
 .sc-btn {

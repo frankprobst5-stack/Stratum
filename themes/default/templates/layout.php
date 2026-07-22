@@ -110,7 +110,7 @@ $userInitials = $currentUser !== null ? strtoupper(substr((string) $currentUser[
     <meta name="theme-color" content="<?= e($accentColor) ?>">
     <link rel="stylesheet" href="/assets/css/theme.css?v=6">
     <?php /* CSS integration (2026-07-21) — the header/nav below is restyled onto this; everything else on the page still runs on theme.css until its own turn comes. See docs/roadmap.md's CSS Integration entries. */ ?>
-    <link rel="stylesheet" href="/assets/css/dashboard.css?v=2">
+    <link rel="stylesheet" href="/assets/css/dashboard.css?v=3">
     <?php /* raw(), not e(): <style> is an HTML5 "raw text" element — entities like &quot; are NOT decoded inside it, so escaping a quoted font name (e.g. "Times New Roman") would emit literal &quot; characters and break the declaration. Safe here because $fontStackCss only ever comes from FontStacks::cssFor()'s own fixed, hardcoded OPTIONS map — never directly from user input. Only these two values are genuinely per-install-dynamic — everything else lives in theme.css, see docs/design-system.md. */ ?>
     <style>:root { --strat-accent: <?= e($accentColor) ?>; --strat-font: <?= raw($fontStackCss) ?>; }</style>
     <?php if ($darkMode === 'auto'): ?>

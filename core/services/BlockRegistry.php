@@ -96,25 +96,35 @@ final class BlockRegistry
      * The one place a CardBlock's title/icon/accent/CTA ever gets
      * rendered — see CardBlock's own docblock for why this isn't
      * hand-written per block. A block that doesn't implement CardBlock
-     * still gets the plain `.strat-block-card` shell it always had.
+     * still gets the plain `.sc-card` shell it always had.
+     *
+     * Restyled 2026-07-21 onto the new dashboard.css system (`sc-`
+     * classes) — same header/CTA shape as before, moved the "View All"
+     * link from a full-width footer button into the header row itself
+     * (matches the design reference the CSS integration was built
+     * against), added a colored icon badge reusing theme.css's existing
+     * 8-accent system via the shared --strat-color-* variables.
      */
     private function wrapCard(Block $block, string $rendered): string
     {
         if (!$block instanceof CardBlock) {
-            return '<div class="strat-block-card">' . $rendered . '</div>';
+            return '<div class="sc-card">' . $rendered . '</div>';
         }
-
-        $header = '<div class="strat-card-header">'
-            . '<span class="strat-icon-badge" data-accent="' . e($block->cardAccent()) . '">' . $block->cardIcon() . '</span>'
-            . '<h3>' . e($block->cardTitle()) . '</h3>'
-            . '</div>';
 
         $viewAllUrl = $block->viewAllUrl();
         $cta = $viewAllUrl !== null
-            ? '<a class="strat-card-cta" href="' . e(route($viewAllUrl)) . '">View All &rarr;</a>'
+            ? '<a class="sc-card-cta" href="' . e(route($viewAllUrl)) . '">View All &rarr;</a>'
             : '';
 
-        return '<div class="strat-block-card">' . $header . $rendered . $cta . '</div>';
+        $header = '<div class="sc-card-header">'
+            . '<span class="sc-card-title">'
+            . '<span class="sc-card-icon-badge" data-accent="' . e($block->cardAccent()) . '">' . $block->cardIcon() . '</span>'
+            . e($block->cardTitle())
+            . '</span>'
+            . $cta
+            . '</div>';
+
+        return '<div class="sc-card">' . $header . $rendered . '</div>';
     }
 
     private function appliesToPath(string $pageScope, string $currentPath): bool
