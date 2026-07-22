@@ -86,7 +86,7 @@ $userInitials = $currentUser !== null ? strtoupper(substr((string) $currentUser[
     <title>Admin — <?= e($siteName) ?></title>
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
     <link rel="apple-touch-icon" href="/assets/images/icon-circle.png">
-    <link rel="stylesheet" href="/assets/css/dashboard.css?v=1">
+    <link rel="stylesheet" href="/assets/css/dashboard.css?v=2">
 </head>
 <body class="sc-root">
 <header class="sc-header">

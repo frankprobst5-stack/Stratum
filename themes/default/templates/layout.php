@@ -109,6 +109,8 @@ $userInitials = $currentUser !== null ? strtoupper(substr((string) $currentUser[
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="<?= e($accentColor) ?>">
     <link rel="stylesheet" href="/assets/css/theme.css?v=6">
+    <?php /* CSS integration (2026-07-21) — the header/nav below is restyled onto this; everything else on the page still runs on theme.css until its own turn comes. See docs/roadmap.md's CSS Integration entries. */ ?>
+    <link rel="stylesheet" href="/assets/css/dashboard.css?v=2">
     <?php /* raw(), not e(): <style> is an HTML5 "raw text" element — entities like &quot; are NOT decoded inside it, so escaping a quoted font name (e.g. "Times New Roman") would emit literal &quot; characters and break the declaration. Safe here because $fontStackCss only ever comes from FontStacks::cssFor()'s own fixed, hardcoded OPTIONS map — never directly from user input. Only these two values are genuinely per-install-dynamic — everything else lives in theme.css, see docs/design-system.md. */ ?>
     <style>:root { --strat-accent: <?= e($accentColor) ?>; --strat-font: <?= raw($fontStackCss) ?>; }</style>
     <?php if ($darkMode === 'auto'): ?>
@@ -134,72 +136,70 @@ $userInitials = $currentUser !== null ? strtoupper(substr((string) $currentUser[
     <?php endif; ?>
 </head>
 <body>
-<div class="site-topbar">
-    <div class="site-topbar-inner">
-        <a class="topbar-brand" href="<?= e(route('/')) ?>">
-            <img src="/assets/images/icon-circle.png" alt="">
-            <?= e($siteName) ?>
-        </a>
-        <nav class="topbar-nav">
-            <ul>
-                <?php foreach ($primaryNav as $item): ?>
-                    <li>
-                        <a href="<?= e(route($item['route'])) ?>" class="<?= !$item['external'] && $isActiveRoute($item['route']) ? 'active' : '' ?>" <?= $item['external'] ? 'target="_blank" rel="noopener"' : '' ?>>
-                            <span aria-hidden="true"><?= $navIcons[$item['route']] ?? $fallbackNavIcon ?></span>
-                            <span class="nav-label"><?= e($item['label']) ?></span>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-                <?php if ($moreNav !== []): ?>
-                    <li class="strat-header-dropdown">
-                        <button type="button" data-dropdown-trigger="nav-more">
-                            <span class="nav-label">More</span> <span aria-hidden="true">&#9662;</span>
-                        </button>
-                        <div class="strat-header-dropdown-panel" data-dropdown-panel="nav-more">
-                            <?php foreach ($moreNav as $item): ?>
-                                <a href="<?= e(route($item['route'])) ?>" <?= $item['external'] ? 'target="_blank" rel="noopener"' : '' ?>><?= e($item['label']) ?></a>
-                            <?php endforeach; ?>
-                        </div>
-                    </li>
-                <?php endif; ?>
-            </ul>
-        </nav>
-        <div class="topbar-actions">
-            <?= $blocks->renderRegion('topbar_actions', $currentPath) ?>
-            <?php if ($isLoggedIn && $currentUser !== null): ?>
-                <div class="strat-header-dropdown">
-                    <button type="button" data-dropdown-trigger="profile-menu" aria-label="Account menu" style="background:none;border:none;padding:0.2rem;cursor:pointer;">
-                        <span class="topbar-profile-avatar"><?= e($userInitials) ?></span>
+<header class="sc-header">
+    <a class="sc-header-brand" href="<?= e(route('/')) ?>">
+        <img src="/assets/images/icon-circle.png" alt="" style="height:1.6rem;width:auto;">
+        <?= e($siteName) ?>
+    </a>
+    <nav class="sc-topbar-nav">
+        <ul>
+            <?php foreach ($primaryNav as $item): ?>
+                <li>
+                    <a href="<?= e(route($item['route'])) ?>" class="<?= !$item['external'] && $isActiveRoute($item['route']) ? 'active' : '' ?>" <?= $item['external'] ? 'target="_blank" rel="noopener"' : '' ?>>
+                        <span aria-hidden="true"><?= $navIcons[$item['route']] ?? $fallbackNavIcon ?></span>
+                        <span class="nav-label"><?= e($item['label']) ?></span>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+            <?php if ($moreNav !== []): ?>
+                <li class="strat-header-dropdown">
+                    <button type="button" data-dropdown-trigger="nav-more">
+                        <span class="nav-label">More</span> <span aria-hidden="true">&#9662;</span>
                     </button>
-                    <div class="strat-header-dropdown-panel" data-dropdown-panel="profile-menu">
-                        <div style="padding:0.4rem 0.6rem;font-size:0.78rem;color:var(--strat-muted-text);">
-                            Signed in as <strong><?= e((string) $currentUser['username']) ?></strong>
-                        </div>
-                        <a href="<?= e(route('/profile')) ?>">My Profile</a>
-                        <a href="<?= e(route('/friends')) ?>">Friends</a>
-                        <?php if ($isAdmin): ?>
-                            <a href="<?= e(route('/admin')) ?>">Admin</a>
-                        <?php endif; ?>
-                        <form method="post" action="<?= e(route('/logout')) ?>">
-                            <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
-                            <button type="submit">Log out</button>
-                        </form>
+                    <div class="strat-header-dropdown-panel" data-dropdown-panel="nav-more">
+                        <?php foreach ($moreNav as $item): ?>
+                            <a href="<?= e(route($item['route'])) ?>" <?= $item['external'] ? 'target="_blank" rel="noopener"' : '' ?>><?= e($item['label']) ?></a>
+                        <?php endforeach; ?>
                     </div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($guestNav as $item): ?>
-                    <a href="<?= e(route($item['route'])) ?>" style="color:#b8bdcc;text-decoration:none;font-size:0.85rem;padding:0.4rem 0.6rem;"><?= e($item['label']) ?></a>
-                <?php endforeach; ?>
-                <a href="<?= e(route('/login')) ?>" style="color:#fff;text-decoration:none;font-size:0.85rem;padding:0.4rem 0.7rem;background:var(--strat-accent);border-radius:4px;">Log in</a>
+                </li>
             <?php endif; ?>
-            <?php if ($darkMode === 'auto'): ?>
-                <button type="button" class="strat-header-icon" id="strat-theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-                    <span aria-hidden="true"><?= $themeToggleIcon ?></span>
+        </ul>
+    </nav>
+    <div class="sc-topbar-actions">
+        <?= $blocks->renderRegion('topbar_actions', $currentPath) ?>
+        <?php if ($isLoggedIn && $currentUser !== null): ?>
+            <div class="strat-header-dropdown">
+                <button type="button" data-dropdown-trigger="profile-menu" aria-label="Account menu" style="background:none;border:none;padding:0.2rem;cursor:pointer;">
+                    <span class="sc-avatar" style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;"><?= e($userInitials) ?></span>
                 </button>
-            <?php endif; ?>
-        </div>
+                <div class="strat-header-dropdown-panel" data-dropdown-panel="profile-menu">
+                    <div style="padding:0.4rem 0.6rem;font-size:0.78rem;color:var(--strat-muted-text);">
+                        Signed in as <strong><?= e((string) $currentUser['username']) ?></strong>
+                    </div>
+                    <a href="<?= e(route('/profile')) ?>">My Profile</a>
+                    <a href="<?= e(route('/friends')) ?>">Friends</a>
+                    <?php if ($isAdmin): ?>
+                        <a href="<?= e(route('/admin')) ?>">Admin</a>
+                    <?php endif; ?>
+                    <form method="post" action="<?= e(route('/logout')) ?>">
+                        <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+                        <button type="submit">Log out</button>
+                    </form>
+                </div>
+            </div>
+        <?php else: ?>
+            <?php foreach ($guestNav as $item): ?>
+                <a href="<?= e(route($item['route'])) ?>" class="sc-topbar-guest-link"><?= e($item['label']) ?></a>
+            <?php endforeach; ?>
+            <a href="<?= e(route('/login')) ?>" class="sc-topbar-cta">Log in</a>
+        <?php endif; ?>
+        <?php if ($darkMode === 'auto'): ?>
+            <button type="button" class="strat-header-icon" id="strat-theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                <span aria-hidden="true"><?= $themeToggleIcon ?></span>
+            </button>
+        <?php endif; ?>
     </div>
-</div>
+</header>
 <div class="site-banner">
     <img class="site-banner-img" src="<?= e($headerBannerUrl) ?>" alt="<?= e($siteName) ?>">
 </div>
@@ -247,7 +247,7 @@ $layoutColumns = trim((trim($sidebarLeftHtml) !== '' ? '200px ' : '') . '1fr' . 
     // framework, same "no build step" posture this app holds everywhere.
     //
     // Panels are position: fixed (see theme.css) so they escape
-    // .topbar-nav's overflow: hidden — which meant top/right can no
+    // .sc-topbar-nav's overflow-x: hidden — which meant top/right can no
     // longer be static CSS (fixed is relative to the viewport, not the
     // trigger), so this computes them from the trigger's real position
     // every time a panel opens.

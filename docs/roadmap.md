@@ -7572,6 +7572,72 @@ change, not just a reskin (no sidebar exists there today). Remaining
 per-module template rewrites (forum, downloads, wiki, etc.) come after
 that, incrementally.
 
+## CSS Integration, Second Slice: Public Site Header/Nav (2026-07-21)
+
+**Why**: the mockups the user built alongside `~/Desktop/css/` show the
+public site's top nav in the same dark aesthetic as the admin panel — no
+sidebar there, just a restyled header. Turned out the *existing* public
+topbar (`.site-topbar`) was already structurally close: brand, icon+label
+primary nav, a "More" overflow dropdown, a search/notifications/profile
+action row, guest sign-up/log-in CTAs — all present already, just on the
+old `.strat-*`/inline-style system. Same reskin-not-rebuild shape as the
+admin slice turned out to be, once looked at closely.
+
+**Markup**: collapsed the old two-level `.site-topbar > .site-topbar-inner`
+wrapper into one `<header class="sc-header">` (reusing the exact same
+class the admin panel uses — `.sc-header`'s `justify-content: space-
+between` becomes a no-op once the new `.sc-topbar-nav`'s `flex: 1`
+consumes the space between brand and actions, so both pages share one
+component unmodified). Renamed `.topbar-brand`/`.topbar-nav`/
+`.topbar-actions`/`.topbar-profile-avatar` to `.sc-header-brand`/
+`.sc-topbar-nav`/`.sc-topbar-actions`/`.sc-avatar`. Deliberately did
+**not** touch `.strat-header-dropdown`/`.strat-header-dropdown-panel` or
+their JS — that's the "More" and profile dropdown mechanism, fixed and
+verified live earlier this session (the `position: fixed`
+ancestor-overflow-escape fix), and renaming working, recently-debugged
+code for a pure visual pass would've been pure risk for zero benefit.
+
+**A real regression caught before it shipped**: `theme.css` had a mobile
+media query (`max-width: 620px`) fixing a genuine bug found live
+2026-07-19 — the primary nav + "More" trigger silently overflowing
+off-screen on narrow viewports. It targeted `.site-topbar-inner`/
+`.topbar-nav`, both now gone from the DOM, making the fix dead code and
+reopening the exact bug it closed. Caught by deliberately checking a
+375px viewport rather than assuming desktop-only verification was
+enough. Ported forward to `.sc-header`/`.sc-topbar-nav` in
+`dashboard.css`. (The dropdown *panel* itself didn't need porting —
+`position: fixed` already escapes any ancestor's clipping regardless of
+viewport width; this was specifically about the nav row itself, and the
+trigger button within it, staying reachable.)
+
+**A second real bug, unrelated to the header logic itself**: after
+editing `dashboard.css` mid-session, the mobile fix appeared not to be
+working — turned out to be a stale browser cache serving the pre-edit
+file from the same `?v=1` URL. `curl` against the server directly
+confirmed the new CSS was being served correctly; bumping the
+cache-busting query string (`?v=2`, in both `layout.php` and
+`admin-layout.php`, since they share the one file) resolved it. A
+reminder for the rest of this rewrite: bump the version on every
+`dashboard.css` edit, not just once at the start.
+
+**Verification**: live as both a guest and `modtest_member`. Header
+renders with correct computed styles (`rgb(15,23,42)` background, 64px
+sticky, real shadow). "More" dropdown, search dropdown, and profile
+dropdown all independently confirmed opening, positioned within the
+viewport, avatar correctly picking up the new `--sc-primary` color.
+Mobile (375px): header wraps to two rows, "More" trigger and its panel
+both confirmed fully within the viewport (previously off-screen by over
+300px before the fix). Full suite green (90 tests, 159 assertions),
+`PublicPagesSmokeTest` passing, full `php -l` sweep clean.
+
+**Deliberately not done in this slice**: the page background/content
+area below the header (hero banner, homepage blocks, sidebars, footer)
+— still on `theme.css` unchanged, matching the "page shell first, then
+per-module content" sequencing already set. The old `.site-topbar`/
+`.topbar-*` rules in `theme.css` are now dead code, left in place rather
+than deleted mid-migration — a full sweep for orphaned rules is cleanup
+for once the whole rewrite is done, not a piecemeal task now.
+
 ---
 
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not

@@ -111,6 +111,40 @@ body.sc-dark-theme {
 .sc-header-user { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #fff; }
 .sc-avatar { width: 32px; height: 32px; border-radius: 50%; background-color: var(--sc-primary); border: 2px solid rgba(255, 255, 255, 0.2); }
 
+/*
+ * Public-site topbar nav + actions — a second consumer of .sc-header
+ * (icon+label primary nav, a "More" overflow trigger, action icons,
+ * guest CTA) alongside the admin one (just brand + a simple link list).
+ * .sc-header's own `justify-content: space-between` becomes a no-op once
+ * .sc-topbar-nav's `flex: 1` consumes the space between brand and
+ * actions, so both can share the same header shell unmodified.
+ *
+ * overflow-x: hidden here guards against the primary nav (admin-
+ * configurable via the menu builder, can grow past what fits) spilling
+ * out horizontally — safe to keep alongside the "More" dropdown despite
+ * that overflow guard, since the dropdown panel is position: fixed (see
+ * .strat-header-dropdown-panel below) specifically so it escapes any
+ * ancestor's clipping, found live 2026-07-21.
+ */
+.sc-topbar-nav { flex: 1; min-width: 0; overflow-x: hidden; }
+.sc-topbar-nav ul { list-style: none; display: flex; gap: 0.15rem; margin: 0; padding: 0; align-items: center; flex-wrap: nowrap; }
+.sc-topbar-nav a, .sc-topbar-nav button {
+    color: #b8bdcc; text-decoration: none; display: flex; align-items: center; gap: 0.35rem;
+    padding: 0.5rem 0.6rem; border-radius: var(--sc-radius-sm); font-size: 0.85rem; background: none; border: none;
+    font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+.sc-topbar-nav a:hover, .sc-topbar-nav button:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.sc-topbar-nav a.active { color: #fff; background-color: var(--sc-primary); }
+
+.sc-topbar-actions { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+.sc-topbar-cta {
+    color: #fff; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    padding: 0.45rem 0.9rem; background-color: var(--sc-primary); border-radius: var(--sc-radius-sm);
+}
+.sc-topbar-cta:hover { background-color: var(--sc-primary-hover); color: #fff; }
+.sc-topbar-guest-link { color: #b8bdcc; text-decoration: none; font-size: 0.85rem; padding: 0.45rem 0.6rem; }
+.sc-topbar-guest-link:hover { color: #fff; }
+
 /* ---------- layout / sidebar ---------- */
 .sc-dashboard-layout { display: flex; min-height: calc(100vh - 64px); }
 .sc-sidebar {
@@ -209,3 +243,23 @@ body.sc-dark-theme {
 /* ---------- components / gallery grid ---------- */
 .sc-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 12px; }
 .sc-gallery-item img { width: 100%; height: 150px; object-fit: cover; border-radius: var(--sc-radius-md); border: 1px solid var(--sc-border-light); }
+
+/*
+ * Public topbar, small screens — porting forward a real fix from
+ * theme.css's old .topbar-nav/.site-topbar-inner (found live
+ * 2026-07-19, now dead code since the header markup moved onto .sc-
+ * classes 2026-07-21): .sc-topbar-nav's own overflow-x: hidden is fine
+ * on desktop where the row has room, but once the header itself needs
+ * to wrap on a narrow screen, that same overflow guard would silently
+ * clip whatever primary nav items and the "More" trigger don't fit —
+ * letting the nav drop to its own full-width row and wrap instead
+ * fixes it structurally. (The dropdown *panel* itself doesn't need this
+ * — position: fixed already escapes any ancestor's clipping regardless
+ * of viewport width — this is about the trigger row itself staying
+ * reachable.)
+ */
+@media (max-width: 620px) {
+    .sc-header { flex-wrap: wrap; height: auto; padding: 0.6rem 1rem; row-gap: 0.4rem; }
+    .sc-topbar-nav { order: 3; flex-basis: 100%; overflow-x: visible; }
+    .sc-topbar-nav ul { flex-wrap: wrap; }
+}
