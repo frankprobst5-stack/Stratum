@@ -7500,6 +7500,78 @@ the failure output, then reverted and confirmed green again. Full suite: `compos
 90 tests (87 existing + 3 new smoke tests, each covering multiple
 routes), 159 assertions, clean.
 
+## CSS Integration, First Slice: Admin Dashboard Chrome (2026-07-21)
+
+**Why**: the design-system rewrite motivating the launch delay is real,
+multi-session work — every template across ~30 modules eventually gets
+rewritten against a new visual system the user built at `~/Desktop/css/`
+(reviewed and documented in the prior conversation: real card shadows,
+a grouped sidebar, stat tiles, a dark theme). Rather than start on the
+public site's `layout.php` as first planned, a closer look at
+`core/admin/templates/admin-layout.php` found it already has almost the
+exact structure the new design targets — a top bar, a grouped left
+sidebar (Content/Community/Commerce/Site Tools/System), a panel-grid
+dashboard — built during the 2026-07-17 Admin Dashboard Redesign, fully
+self-contained with its own inline `<style>` block, never linked to
+`theme.css` at all. That makes it a reskin, not a rebuild, and the
+lowest-risk possible starting point: nothing club members ever see
+changes here, only admins/officers.
+
+**`public/assets/css/dashboard.css`, a new file** — merged from the
+source framework's 8 files into one (no `@import` chain; that's a real
+render-blocking cost on shared hosting, the same reasoning `theme.css`
+has always been a single file), every class prefixed `sc-` for a clean
+boundary against both the legacy `.strat-*` system and anything a user-
+uploaded theme/addon might define. Deliberately a separate file from
+`theme.css`, not a merge into it — the rewrite happens incrementally
+across sessions, so `theme.css` keeps serving every template not yet
+migrated while `dashboard.css` takes over piece by piece; they'll merge
+once the transition is complete. One real bug fixed during the port, not
+carried forward faithfully: the source framework's stat-icon and active-
+sidebar-item backgrounds reference `var(--primary-light)`, which only
+had a value in the source's dark-theme override — in light mode (the
+default) it was silently undefined. Added a real light-mode value.
+
+**`admin-layout.php` and `dashboard.php` rewritten** — same structure,
+same real data, new classes. The chrome: `.sc-header` (sticky, dark) +
+`.sc-dashboard-layout`/`.sc-sidebar` (grouped, one cosmetic icon per
+section rather than ~40 individual module icons — not worth hand-mapping
+for an open-ended, module-driven nav list). User identity moved from a
+sidebar-bottom card into the header's right side (avatar initials +
+"Welcome, {username}" + a log-out button), matching where the actual
+design reference puts it. The dashboard content itself: `.sc-card`/
+`.sc-widget-row` in a 12-column `.sc-dashboard-grid`, same six panels as
+before (Recent Activity, Quick Actions, System Status, Needs Attention,
+Who's Online, Staff Notes) — all still real service-backed data, nothing
+invented. Deliberately did **not** add the mockup's 4-tile stats row
+(News Items/Users/Comments/Page Views) — those aren't numbers this app
+currently tracks (page-view analytics doesn't exist at all), and
+inventing plausible-looking figures would violate the same "real
+services, not invented stats" rule the original 2026-07-17 dashboard
+build was explicit about. A real stats row is future work once there's
+real data to back it, not a styling-pass shortcut.
+
+**Verification**: `preview_screenshot` was unreliable this session
+(timed out repeatedly, even after a full server restart) — fell back to
+`preview_inspect`/`preview_snapshot`, which worked reliably. Confirmed
+live as `modtest_admin`: every dashboard panel present with real data
+(37/37 modules enabled, 1 open report, 9 trash items, 3 members/3 guests
+online, a real activity feed), computed styles confirmed correct on the
+header (dark navy `rgb(15,23,42)`, sticky, real shadow), sidebar (260px,
+white, all ~40 nav items grouped correctly under their real section
+labels), and cards (white, real shadow, correct 12-col grid math at
+1400px). `/admin/users` and `/admin/settings` both confirmed serving the
+new chrome (55 `sc-*` class occurrences), logout still works, and
+`/admin` correctly redirects when logged out — access control unaffected
+by the reskin. `AdminPagesSmokeTest` and the full 90-test suite both
+green; full `php -l` sweep clean.
+
+**Next**: the public site's `themes/default/templates/layout.php`
+(header/nav) — unlike the admin panel, this one needs real structural
+change, not just a reskin (no sidebar exists there today). Remaining
+per-module template rewrites (forum, downloads, wiki, etc.) come after
+that, incrementally.
+
 ---
 
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not

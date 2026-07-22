@@ -1,0 +1,211 @@
+/*
+ * Stratum CMS — dashboard design system (CSS integration, started
+ * 2026-07-21). A separate file from theme.css, not a replacement for it
+ * yet — the CSS/template rewrite this powers happens incrementally,
+ * module by module, over several sessions, so theme.css keeps serving
+ * every template not yet migrated while this file takes over piece by
+ * piece. Ported from a source framework the user built at ~/Desktop/css/
+ * (variables.css, base/reset.css, layout/{grid,header,sidebar}.css,
+ * components/{cards,buttons,forms,stats,widgets}.css, dark-theme.css),
+ * merged into one file (no @import chain — that's a real render-blocking
+ * performance cost on real shared hosting, the same reasoning theme.css
+ * has always been one file) and every class prefixed `sc-` for a clean,
+ * collision-proof boundary against both the legacy `.strat-*` system and
+ * anything a user-uploaded theme/addon might define.
+ *
+ * One real bug fixed during the port, not carried forward: the source
+ * framework's stat-icon and active-sidebar-item backgrounds reference
+ * `var(--primary-light)`, which was only ever defined in dark-theme.css
+ * — in light mode (the default) it was simply undefined, silently
+ * failing. Added a light-mode value below.
+ */
+
+:root {
+    --sc-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --sc-bg-page: #f4f6f9;
+    --sc-bg-card: #ffffff;
+    --sc-bg-surface: #f8fafc;
+    --sc-text-primary: #0f172a;
+    --sc-text-secondary: #475569;
+    --sc-text-muted: #64748b;
+    --sc-border-color: #e2e8f0;
+    --sc-border-light: #f1f5f9;
+
+    --sc-primary: #0284c7;
+    --sc-primary-hover: #0369a1;
+    --sc-primary-light: rgba(2, 132, 199, 0.12);
+
+    --sc-radius-lg: 12px;
+    --sc-radius-md: 8px;
+    --sc-radius-sm: 6px;
+
+    --sc-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+body.sc-dark-theme {
+    --sc-bg-page: #0b1329;
+    --sc-bg-card: #1c2541;
+    --sc-bg-surface: #222e50;
+
+    --sc-text-primary: #f8fafc;
+    --sc-text-secondary: #cbd5e1;
+    --sc-text-muted: #64748b;
+
+    --sc-border-color: #2a375e;
+    --sc-border-light: #222e50;
+
+    --sc-primary-light: rgba(2, 132, 199, 0.2);
+    --sc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- reset ---------- */
+.sc-root, .sc-root *, .sc-root *::before, .sc-root *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+.sc-root {
+    background-color: var(--sc-bg-page);
+    color: var(--sc-text-secondary);
+    font-family: var(--sc-font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+}
+.sc-root a { color: var(--sc-primary); text-decoration: none; }
+.sc-root a:hover { color: var(--sc-primary-hover); }
+
+/* ---------- layout / grid ---------- */
+.sc-container { width: 100%; max-width: 1440px; margin: 0 auto; padding: 24px; }
+.sc-dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+.sc-col-3 { grid-column: span 3; }
+.sc-col-4 { grid-column: span 4; }
+.sc-col-6 { grid-column: span 6; }
+.sc-col-8 { grid-column: span 8; }
+.sc-col-12 { grid-column: span 12; }
+@media (max-width: 1024px) {
+    .sc-dashboard-grid > [class^="sc-col-"] { grid-column: span 6; }
+}
+@media (max-width: 768px) {
+    .sc-dashboard-grid > [class^="sc-col-"] { grid-column: span 12; }
+}
+
+/* ---------- layout / header ---------- */
+.sc-header {
+    background-color: var(--sc-text-primary);
+    color: #ffffff;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--sc-shadow-md);
+}
+.sc-header-brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; color: #fff; }
+.sc-header-nav { display: flex; align-items: center; gap: 20px; }
+.sc-header-link { color: #cbd5e1; font-size: 0.9rem; font-weight: 500; transition: color 0.15s ease; }
+.sc-header-link:hover, .sc-header-link.active { color: #ffffff; }
+.sc-header-user { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #fff; }
+.sc-avatar { width: 32px; height: 32px; border-radius: 50%; background-color: var(--sc-primary); border: 2px solid rgba(255, 255, 255, 0.2); }
+
+/* ---------- layout / sidebar ---------- */
+.sc-dashboard-layout { display: flex; min-height: calc(100vh - 64px); }
+.sc-sidebar {
+    width: 260px;
+    background-color: var(--sc-bg-card);
+    border-right: 1px solid var(--sc-border-color);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    flex-shrink: 0;
+}
+.sc-sidebar-group { display: flex; flex-direction: column; gap: 8px; }
+.sc-sidebar-label {
+    font-size: 0.7rem; font-weight: 700; color: var(--sc-text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em; padding-left: 12px;
+}
+.sc-sidebar-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    color: var(--sc-text-secondary); font-weight: 600; font-size: 0.9rem;
+    border-radius: var(--sc-radius-md); transition: all 0.15s ease;
+}
+.sc-sidebar-item:hover { background-color: var(--sc-bg-page); color: var(--sc-text-primary); }
+.sc-sidebar-item.active { background-color: var(--sc-primary-light); color: var(--sc-primary); }
+
+/* ---------- components / cards ---------- */
+.sc-card {
+    background-color: var(--sc-bg-card);
+    border-radius: var(--sc-radius-lg);
+    box-shadow: var(--sc-shadow-md);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+.sc-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--sc-border-light);
+}
+.sc-card-title { font-size: 1.05rem; font-weight: 700; color: var(--sc-text-primary); }
+
+/* ---------- components / buttons ---------- */
+.sc-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 8px 16px; font-size: 0.875rem; font-weight: 600;
+    border-radius: var(--sc-radius-sm); cursor: pointer; border: none;
+    font-family: inherit;
+}
+.sc-btn-primary { background-color: var(--sc-primary); color: #ffffff; }
+.sc-btn-block-footer {
+    display: block; width: 100%; text-align: center; background-color: var(--sc-bg-surface);
+    color: var(--sc-text-secondary); padding: 10px; border-radius: var(--sc-radius-sm);
+    font-size: 0.85rem; font-weight: 600; margin-top: auto;
+}
+.sc-btn-block-footer:hover { background-color: var(--sc-border-color); color: var(--sc-text-primary); }
+
+/* ---------- components / forms ---------- */
+.sc-form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.sc-label { font-size: 0.85rem; font-weight: 600; color: var(--sc-text-primary); }
+.sc-input {
+    width: 100%; padding: 10px 14px; font-size: 0.9rem; font-family: inherit;
+    background-color: #ffffff; border: 1px solid var(--sc-border-color);
+    border-radius: var(--sc-radius-md); color: var(--sc-text-primary); transition: all 0.15s ease;
+}
+.sc-input:focus { outline: none; border-color: var(--sc-primary); box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
+.sc-input::placeholder { color: var(--sc-text-muted); }
+
+/* ---------- components / stats ---------- */
+.sc-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; width: 100%; }
+@media (max-width: 1024px) { .sc-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+.sc-stat-box {
+    background-color: var(--sc-bg-card); border-radius: var(--sc-radius-lg); box-shadow: var(--sc-shadow-md);
+    padding: 20px; display: flex; align-items: center; gap: 16px; border: 1px solid var(--sc-border-light);
+}
+.sc-stat-icon-wrapper {
+    width: 48px; height: 48px; border-radius: 50%; background-color: var(--sc-primary-light);
+    color: var(--sc-primary); display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; flex-shrink: 0;
+}
+.sc-stat-info { display: flex; flex-direction: column; gap: 2px; }
+.sc-stat-label { font-size: 0.75rem; font-weight: 700; color: var(--sc-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.sc-stat-number { font-size: 1.5rem; font-weight: 700; color: var(--sc-text-primary); line-height: 1.2; }
+.sc-stat-trend { font-size: 0.8rem; font-weight: 600; color: #10b981; display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; }
+
+/* ---------- components / widgets ---------- */
+.sc-widget-row { padding: 12px 0; border-bottom: 1px solid var(--sc-border-light); }
+.sc-widget-row:last-child { border-bottom: none; }
+.sc-widget-row-title { font-size: 0.925rem; font-weight: 600; color: var(--sc-text-primary); }
+.sc-widget-meta { font-size: 0.75rem; color: var(--sc-text-muted); }
+.sc-quick-links-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.sc-quick-link-item {
+    background-color: var(--sc-bg-surface); border: 1px solid var(--sc-border-light); border-radius: var(--sc-radius-md);
+    padding: 16px; text-align: center; font-weight: 600; color: var(--sc-text-secondary);
+}
+.sc-quick-link-item:hover { background-color: #ffffff; border-color: var(--sc-primary); }
+
+/* ---------- components / gallery grid ---------- */
+.sc-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 12px; }
+.sc-gallery-item img { width: 100%; height: 150px; object-fit: cover; border-radius: var(--sc-radius-md); border: 1px solid var(--sc-border-light); }

@@ -14,108 +14,123 @@
  * @var string $csrfToken
  */
 ?>
-<h1>Dashboard</h1>
-<p style="color:#6b7280;">Welcome back, <?= e($currentUser['username'] ?? 'admin') ?>.</p>
+<h1 style="color:var(--sc-text-primary);font-size:1.5rem;margin-bottom:0.25rem;">Dashboard</h1>
+<p style="color:var(--sc-text-muted);margin-bottom:1.5rem;">Welcome back, <?= e($currentUser['username'] ?? 'admin') ?>. Here's what's real on your site today.</p>
 
-<div class="admin-panel-grid">
+<div class="sc-dashboard-grid">
 
-    <div class="admin-panel">
-        <h2>Recent Activity <a href="<?= e(route('/activity')) ?>">View all</a></h2>
-        <?php if ($recentActivity === []): ?>
-            <p class="muted">Nothing recent, or the Activity module is disabled.</p>
-        <?php else: ?>
-            <ul>
+    <div class="sc-col-4">
+        <div class="sc-card">
+            <div class="sc-card-header">
+                <span class="sc-card-title">Recent Activity</span>
+                <a href="<?= e(route('/activity')) ?>" style="font-size:0.8rem;">View all</a>
+            </div>
+            <?php if ($recentActivity === []): ?>
+                <p style="color:var(--sc-text-muted);font-size:0.9rem;">Nothing recent, or the Activity module is disabled.</p>
+            <?php else: ?>
                 <?php foreach ($recentActivity as $item): ?>
-                    <li>
+                    <div class="sc-widget-row">
                         <?php if ($item['content_type'] === 'member'): ?>
-                            <strong><?= e($item['title']) ?></strong> <?= e($item['verb']) ?>
+                            <div class="sc-widget-row-title"><?= e($item['title']) ?> <?= e($item['verb']) ?></div>
                         <?php else: ?>
-                            <strong><?= e($item['actor'] ?? 'Unknown') ?></strong> <?= e($item['verb']) ?>:
-                            <?= e($item['title']) ?>
+                            <div class="sc-widget-row-title"><?= e($item['actor'] ?? 'Unknown') ?> <?= e($item['verb']) ?>: <?= e($item['title']) ?></div>
                         <?php endif; ?>
-                        <br><small class="muted"><?= e($item['created_at']) ?></small>
-                    </li>
+                        <div class="sc-widget-meta"><?= e($item['created_at']) ?></div>
+                    </div>
                 <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
+            <?php endif; ?>
+        </div>
     </div>
 
-    <div class="admin-panel">
-        <h2>Quick Actions</h2>
-        <ul>
-            <li><a href="<?= e(route('/admin/articles/create')) ?>">+ New article</a></li>
-            <li><a href="<?= e(route('/admin/users/create')) ?>">+ Add user</a></li>
-            <li><a href="<?= e(route('/admin/modules')) ?>">Manage modules</a></li>
-            <li><a href="<?= e(route('/admin/settings')) ?>">Site settings</a></li>
-        </ul>
+    <div class="sc-col-4">
+        <div class="sc-card">
+            <div class="sc-card-header"><span class="sc-card-title">Quick Actions</span></div>
+            <a class="sc-quick-link-item" style="margin-bottom:0.5rem;display:block;" href="<?= e(route('/admin/articles/create')) ?>">+ New article</a>
+            <a class="sc-quick-link-item" style="margin-bottom:0.5rem;display:block;" href="<?= e(route('/admin/users/create')) ?>">+ Add user</a>
+            <a class="sc-quick-link-item" style="margin-bottom:0.5rem;display:block;" href="<?= e(route('/admin/modules')) ?>">Manage modules</a>
+            <a class="sc-quick-link-item" style="display:block;" href="<?= e(route('/admin/settings')) ?>">Site settings</a>
+        </div>
     </div>
 
-    <div class="admin-panel">
-        <h2>System Status</h2>
-        <div class="admin-stat"><span>PHP version</span><span class="value"><?= e($phpVersion) ?></span></div>
-        <div class="admin-stat"><span>MySQL version</span><span class="value"><?= e($mysqlVersion) ?></span></div>
-        <div class="admin-stat"><span>Modules</span><span class="value"><?= $enabledModuleCount ?> / <?= $moduleCount ?> enabled</span></div>
+    <div class="sc-col-4">
+        <div class="sc-card">
+            <div class="sc-card-header"><span class="sc-card-title">System Status</span></div>
+            <div class="sc-widget-row" style="display:flex;justify-content:space-between;">
+                <span>PHP version</span><strong><?= e($phpVersion) ?></strong>
+            </div>
+            <div class="sc-widget-row" style="display:flex;justify-content:space-between;">
+                <span>MySQL version</span><strong><?= e($mysqlVersion) ?></strong>
+            </div>
+            <div class="sc-widget-row" style="display:flex;justify-content:space-between;">
+                <span>Modules</span><strong><?= $enabledModuleCount ?> / <?= $moduleCount ?> enabled</strong>
+            </div>
+        </div>
     </div>
 
     <?php if ($openReports !== null || $trashCount !== null): ?>
-        <div class="admin-panel">
-            <h2>Needs Attention</h2>
-            <?php if ($openReports !== null): ?>
-                <div class="admin-stat">
-                    <a href="<?= e(route('/admin/moderation')) ?>">Open reports</a>
-                    <span class="value"><?= $openReports ?></span>
-                </div>
-            <?php endif; ?>
-            <?php if ($trashCount !== null): ?>
-                <div class="admin-stat">
-                    <a href="<?= e(route('/admin/trash')) ?>">Items in trash</a>
-                    <span class="value"><?= $trashCount ?></span>
-                </div>
-            <?php endif; ?>
+        <div class="sc-col-6">
+            <div class="sc-card">
+                <div class="sc-card-header"><span class="sc-card-title">Needs Attention</span></div>
+                <?php if ($openReports !== null): ?>
+                    <div class="sc-widget-row" style="display:flex;justify-content:space-between;">
+                        <a href="<?= e(route('/admin/moderation')) ?>">Open reports</a><strong><?= $openReports ?></strong>
+                    </div>
+                <?php endif; ?>
+                <?php if ($trashCount !== null): ?>
+                    <div class="sc-widget-row" style="display:flex;justify-content:space-between;">
+                        <a href="<?= e(route('/admin/trash')) ?>">Items in trash</a><strong><?= $trashCount ?></strong>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     <?php endif; ?>
 
     <?php if ($onlineMembers !== null): ?>
-        <div class="admin-panel">
-            <h2>Who's Online <a href="<?= e(route('/online')) ?>">View all</a></h2>
-            <p class="muted"><?= count($onlineMembers) ?> member<?= count($onlineMembers) === 1 ? '' : 's' ?>, <?= $guestCount ?> guest<?= $guestCount === 1 ? '' : 's' ?> right now.</p>
-            <?php if ($onlineMembers !== []): ?>
-                <ul>
-                    <?php foreach (array_slice($onlineMembers, 0, 6) as $member): ?>
-                        <li><?= e($member['username']) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
+        <div class="sc-col-6">
+            <div class="sc-card">
+                <div class="sc-card-header">
+                    <span class="sc-card-title">Who's Online</span>
+                    <a href="<?= e(route('/online')) ?>" style="font-size:0.8rem;">View all</a>
+                </div>
+                <p style="color:var(--sc-text-muted);font-size:0.85rem;margin-bottom:0.5rem;">
+                    <?= count($onlineMembers) ?> member<?= count($onlineMembers) === 1 ? '' : 's' ?>, <?= $guestCount ?> guest<?= $guestCount === 1 ? '' : 's' ?> right now.
+                </p>
+                <?php foreach (array_slice($onlineMembers, 0, 6) as $member): ?>
+                    <div class="sc-widget-row"><?= e($member['username']) ?></div>
+                <?php endforeach; ?>
+            </div>
         </div>
     <?php endif; ?>
 
-    <div class="admin-panel">
-        <h2>Staff Notes</h2>
-        <p class="muted">Reminders, handoff notes, ongoing issues — shared between admins/moderators, not attached to any member or content.</p>
-        <?php if ($adminNotes === []): ?>
-            <p class="muted">No notes yet.</p>
-        <?php else: ?>
-            <ul>
+    <div class="sc-col-12">
+        <div class="sc-card">
+            <div class="sc-card-header"><span class="sc-card-title">Staff Notes</span></div>
+            <p style="color:var(--sc-text-muted);font-size:0.85rem;margin-bottom:0.75rem;">Reminders, handoff notes, ongoing issues — shared between admins/moderators, not attached to any member or content.</p>
+            <?php if ($adminNotes === []): ?>
+                <p style="color:var(--sc-text-muted);font-size:0.9rem;">No notes yet.</p>
+            <?php else: ?>
                 <?php foreach ($adminNotes as $note): ?>
-                    <li style="margin-bottom:0.5rem;">
+                    <div class="sc-widget-row">
                         <div style="white-space:pre-wrap;"><?= e($note['body']) ?></div>
-                        <small class="muted">
+                        <div class="sc-widget-meta">
                             <?= e($note['authorName']) ?> &middot; <?= e($note['created_at']) ?>
                             &middot;
                             <form method="post" action="<?= e(route('/admin/notes/' . $note['id'] . '/delete')) ?>" style="display:inline;">
                                 <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
-                                <button type="submit" style="border:none; background:none; color:#888; text-decoration:underline; cursor:pointer; padding:0; font-size:0.85rem;">Delete</button>
+                                <button type="submit" style="border:none;background:none;color:var(--sc-text-muted);text-decoration:underline;cursor:pointer;padding:0;font-size:0.85rem;">Delete</button>
                             </form>
-                        </small>
-                    </li>
+                        </div>
+                    </div>
                 <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-        <form method="post" action="<?= e(route('/admin/notes')) ?>">
-            <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
-            <textarea name="body" rows="2" cols="40" required placeholder="Leave a note for the team..." style="width:100%; box-sizing:border-box;"></textarea>
-            <button type="submit">Add note</button>
-        </form>
+            <?php endif; ?>
+            <form method="post" action="<?= e(route('/admin/notes')) ?>" style="margin-top:0.75rem;">
+                <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+                <div class="sc-form-group">
+                    <textarea class="sc-input" name="body" rows="2" required placeholder="Leave a note for the team..."></textarea>
+                </div>
+                <button type="submit" class="sc-btn sc-btn-primary">Add note</button>
+            </form>
+        </div>
     </div>
 
 </div>
