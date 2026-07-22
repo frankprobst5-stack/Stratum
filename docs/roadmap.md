@@ -7435,6 +7435,71 @@ process this project doesn't have yet), and any Kubernetes/Helm chart
 (single-VPS `docker compose up` is the actual use case this was built
 for). Remaining Stage 10 item: GraphQL (still optional, not scheduled).
 
+## Pre-Launch Hardening (started 2026-07-21)
+
+**Why**: the DreamHost launch was delayed by the user's own decision —
+the live site's visual design wasn't going to be acceptable to the real
+clubs it's replacing (see the design-system discussion; a CSS framework
+rewrite is starting separately). Rather than let the delay window sit
+idle, four items were agreed to run alongside the design work: verify
+the backup manager actually restores, a web-layer regression safety net
+ahead of the coming template rewrite, a deeper security pass across the
+non-API modules, and password reset/email. This entry covers the first
+two, done first since they're both prerequisites for doing the rewrite
+safely rather than blind.
+
+**Backup restore, verified end-to-end** — the Backup Manager (shipped
+2026-07-17) had only ever been restore-tested once, at ship time. Redone
+here as a fresh, real check: created a real backup through the actual
+admin UI (`POST /admin/system/backups/create` as `modtest_admin`, not a
+direct service call), restored the resulting `.sql.gz` into a genuinely
+separate throwaway MySQL 8.0 container (via `docker-compose`, not a raw
+`docker run -p` — an ad-hoc port-mapped container hit real host-
+connectivity issues earlier this project's history, `docker-compose`
+hasn't), then compared every table's row count against the real source
+database. 102/102 tables matched, 101/102 row counts matched exactly.
+The one difference (`audit_log`: 94 source rows vs. 93 restored) is
+fully explained, not a bug: the newest source row is the audit-log entry
+for the "create backup" action itself, written by `public/index.php`'s
+post-dispatch hook *after* `BackupService::create()` already ran and
+dumped the database's state mid-request — the backup necessarily
+captures the database one action-log-write before its own creation gets
+recorded. Confirmed directly by reading that exact row (`id 112, POST
+/admin/system/backups/create`). Backup Manager confirmed genuinely
+restorable, not just able to produce a file.
+
+**Web-layer smoke-test suite** — the existing 90-test suite (`tests/Api/`,
+`tests/Core/`) only ever exercised the REST API's JSON responses; zero
+automated coverage existed for the actual HTML-rendering web controllers
+about to get restructured by the CSS/template rewrite. Added
+`tests/Web/{Public,Authed,Admin}PagesSmokeTest.php` — deliberately shallow
+by design (this is a render-completeness net, not behavioral testing;
+content correctness stays the API suite's job): each test constructs a
+real web controller directly against a real `App` (the exact pattern
+`tests/Api/*.php` already established), calls its landing-page action
+with a plain `Request`, and asserts the response is a real `200` whose
+body contains a closed `</html>` tag — cheap enough to add every route to
+without per-page fixture data, since an empty list renders exactly as
+validly as a populated one for this purpose, and specific enough to
+catch a fatal mid-render error (a broken `include`, a renamed template
+variable) that would otherwise truncate the output silently.
+`PublicPagesSmokeTest` covers 22 guest-visible landing pages;
+`AuthedPagesSmokeTest` covers the 5 that need a logged-in member
+(friends, bookmarks, messages, notifications, profile);
+`AdminPagesSmokeTest` covers 5 representative `/admin/*` pages
+(dashboard, users, settings, plus two module admin screens) rather than
+all ~30, since every admin controller shares one `AdminController` base
+and render path. One guest route deliberately excluded: `/` (the
+homepage) is registered as an inline closure in `public/index.php`, not
+a controller class, so it can't be constructed the same way — covered by
+manual live verification instead. **Proven to actually catch a
+regression, not just pass trivially**: temporarily threw an exception
+from inside `forum/templates/index.php`, reran the suite, watched it
+fail with the exact broken route and the real exception message named in
+the failure output, then reverted and confirmed green again. Full suite: `composer test`,
+90 tests (87 existing + 3 new smoke tests, each covering multiple
+routes), 159 assertions, clean.
+
 ---
 
 *Deferred, not scoped to a stage yet*: native mobile app (explicitly "not
